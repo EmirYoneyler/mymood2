@@ -1,0 +1,65 @@
+<main class="friends-page">
+    <h1>Arkadaşlar {{if .Pending}}<span class="badge">{{len .Pending}}</span>{{end}}</h1>
+
+    <section class="friend-search">
+        <form method="GET" action="/friends">
+            <input type="text" name="q" placeholder="Kullanıcı adı ara..." value="{{.Query}}">
+            <button type="submit">Ara</button>
+        </form>
+
+        {{if .Results}}
+        <ul class="search-results">
+            {{range .Results}}
+            <li>
+                <span>@{{.Username}}</span>
+                <form method="POST" action="/friends/request">
+                    <input type="hidden" name="username" value="{{.Username}}">
+                    <button type="submit">İstek Gönder</button>
+                </form>
+            </li>
+            {{end}}
+        </ul>
+        {{else if .Query}}
+        <p>Sonuç bulunamadı.</p>
+        {{end}}
+    </section>
+
+    {{if .Pending}}
+    <section class="pending-requests">
+        <h2>Bekleyen İstekler</h2>
+        <ul>
+            {{range .Pending}}
+            <li>
+                <span>@{{.From.Username}}</span>
+                <form method="POST" action="/friends/{{.FriendshipID}}/accept">
+                    <button type="submit">Kabul Et</button>
+                </form>
+                <form method="POST" action="/friends/{{.FriendshipID}}/reject">
+                    <button type="submit">Reddet</button>
+                </form>
+            </li>
+            {{end}}
+        </ul>
+    </section>
+    {{end}}
+
+    <section class="friend-list">
+        <h2>Arkadaşların</h2>
+        {{if .Friends}}
+        <ul>
+            {{range .Friends}}
+            <li>
+                <span>@{{.User.Username}}</span>
+                <form method="POST" action="/friends/{{.FriendshipID}}/remove">
+                    <button type="submit">Arkadaşlıktan Çık</button>
+                </form>
+            </li>
+            {{end}}
+        </ul>
+        {{else}}
+        <p>Henüz arkadaşın yok. Yukarıdan kullanıcı adıyla ara.</p>
+        {{end}}
+    </section>
+
+    <p><a href="/feed">Akışa dön</a></p>
+</main>
