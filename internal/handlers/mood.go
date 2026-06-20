@@ -12,14 +12,16 @@ import (
 )
 
 type MoodHandler struct {
-	moods    *repository.MoodRepository
-	validate *validator.Validate
+	moods       *repository.MoodRepository
+	friendships *repository.FriendshipRepository
+	validate    *validator.Validate
 }
 
-func NewMoodHandler(moods *repository.MoodRepository) *MoodHandler {
+func NewMoodHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository) *MoodHandler {
 	return &MoodHandler{
-		moods:    moods,
-		validate: validator.New(),
+		moods:       moods,
+		friendships: friendships,
+		validate:    validator.New(),
 	}
 }
 
@@ -41,11 +43,11 @@ func (h *MoodHandler) ShowForm(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	return c.Render("pages/mood", fiber.Map{
+	return c.Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
 		"Today":    today,
 		"NoteText": noteText(today),
 		"MoodList": moodScale(),
-	}, "layouts/base")
+	}), "layouts/base")
 }
 
 func (h *MoodHandler) Submit(c *fiber.Ctx) error {
@@ -53,17 +55,17 @@ func (h *MoodHandler) Submit(c *fiber.Ctx) error {
 
 	var form moodForm
 	if err := c.BodyParser(&form); err != nil {
-		return c.Status(fiber.StatusBadRequest).Render("pages/mood", fiber.Map{
+		return c.Status(fiber.StatusBadRequest).Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
 			"Error":    "Geçersiz form verisi.",
 			"MoodList": moodScale(),
-		}, "layouts/base")
+		}), "layouts/base")
 	}
 
 	if err := h.validate.Struct(form); err != nil {
-		return c.Status(fiber.StatusBadRequest).Render("pages/mood", fiber.Map{
+		return c.Status(fiber.StatusBadRequest).Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
 			"Error":    "Puan 1-10 arasında olmalı, not en fazla 280 karakter olabilir.",
 			"MoodList": moodScale(),
-		}, "layouts/base")
+		}), "layouts/base")
 	}
 
 	var note *string
@@ -73,18 +75,18 @@ func (h *MoodHandler) Submit(c *fiber.Ctx) error {
 
 	entry, err := h.moods.Upsert(c.Context(), userID, form.Score, models.MoodEmoji(form.Score), note, todayDate())
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).Render("pages/mood", fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
 			"Error":    "Mood kaydedilemedi, lütfen tekrar dene.",
 			"MoodList": moodScale(),
-		}, "layouts/base")
+		}), "layouts/base")
 	}
 
-	return c.Render("pages/mood", fiber.Map{
+	return c.Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
 		"Today":    entry,
 		"NoteText": noteText(entry),
 		"Saved":    true,
 		"MoodList": moodScale(),
-	}, "layouts/base")
+	}), "layouts/base")
 }
 
 func noteText(entry *models.MoodEntry) string {

@@ -1,0 +1,34 @@
+<main class="profile-page">
+    <h1>Profilim</h1>
+
+    <section class="stats">
+        <div class="stat-card">
+            <span class="stat-value">{{.AverageScore}}</span>
+            <span class="stat-label">Ortalama Mood</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">{{.LongestStreak}}</span>
+            <span class="stat-label">En Uzun Streak (gün)</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">{{.TotalEntries}}</span>
+            <span class="stat-label">Toplam Giriş</span>
+        </div>
+    </section>
+
+    <section class="heatmap">
+        <h2>Mood Geçmişi</h2>
+        <div class="heatmap-grid">
+            {{range .Weeks}}
+            <div class="heatmap-week">
+                {{range .}}
+                <div
+                    class="heatmap-cell {{if .Future}}future{{else if .HasEntry}}level-{{.Score}}{{else}}level-0{{end}}"
+                    title="{{.Date.Format "02 Jan 2006"}}{{if .HasEntry}} - {{.Score}}/10{{end}}"
+                ></div>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+    </section>
+</main>

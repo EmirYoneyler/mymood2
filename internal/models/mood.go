@@ -12,6 +12,14 @@ type MoodEntry struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+// NoteText returns the entry's note, or an empty string if none was set.
+func (e MoodEntry) NoteText() string {
+	if e.Note == nil {
+		return ""
+	}
+	return *e.Note
+}
+
 // MoodEmoji returns the emoji associated with a 1-10 mood score.
 func MoodEmoji(score int) string {
 	emojis := map[int]string{

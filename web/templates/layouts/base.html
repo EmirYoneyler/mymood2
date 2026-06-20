@@ -7,6 +7,17 @@
     <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
+    {{if .ShowNav}}
+    <nav class="topnav">
+        <a href="/feed">Akış</a>
+        <a href="/mood">Bugün</a>
+        <a href="/friends">Arkadaşlar{{if .PendingCount}} <span class="badge">{{.PendingCount}}</span>{{end}}</a>
+        <a href="/profile">Profilim</a>
+        <form method="POST" action="/logout" class="inline-form">
+            <button type="submit">Çıkış</button>
+        </form>
+    </nav>
+    {{end}}
     {{embed}}
 </body>
 </html>

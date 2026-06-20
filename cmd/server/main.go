@@ -61,8 +61,10 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	friendshipRepo := repository.NewFriendshipRepository(pool)
 
 	authHandler := handlers.NewAuthHandler(userRepo, cfg.JWTSecret, cfg.IsProduction())
-	moodHandler := handlers.NewMoodHandler(moodRepo)
+	moodHandler := handlers.NewMoodHandler(moodRepo, friendshipRepo)
 	friendHandler := handlers.NewFriendHandler(userRepo, friendshipRepo)
+	feedHandler := handlers.NewFeedHandler(moodRepo, friendshipRepo)
+	profileHandler := handlers.NewProfileHandler(moodRepo, friendshipRepo)
 
 	authLimiter := limiter.New(limiter.Config{
 		Max:        10,
@@ -90,7 +92,6 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	app.Post("/friends/:id/reject", requireAuth, friendHandler.RejectRequest)
 	app.Post("/friends/:id/remove", requireAuth, friendHandler.RemoveFriend)
 
-	app.Get("/feed", requireAuth, func(c *fiber.Ctx) error {
-		return c.SendString("Feed - coming soon")
-	})
+	app.Get("/feed", requireAuth, feedHandler.Show)
+	app.Get("/profile", requireAuth, profileHandler.Show)
 }

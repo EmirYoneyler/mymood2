@@ -85,6 +85,93 @@ func (r *MoodRepository) ListByUserIDs(ctx context.Context, userIDs []string, li
 	return collectMoodEntries(rows)
 }
 
+// ListByUserSince returns a user's mood entries from the given date onward, oldest first.
+func (r *MoodRepository) ListByUserSince(ctx context.Context, userID string, since time.Time) ([]models.MoodEntry, error) {
+	const query = `
+		SELECT id, user_id, mood_score, mood_emoji, note, entry_date, created_at
+		FROM mood_entries
+		WHERE user_id = $1 AND entry_date >= $2
+		ORDER BY entry_date ASC`
+
+	rows, err := r.db.Query(ctx, query, userID, since)
+	if err != nil {
+		return nil, fmt.Errorf("listing mood entries since: %w", err)
+	}
+	defer rows.Close()
+
+	return collectMoodEntries(rows)
+}
+
+// ListEntryDates returns all dates a user has logged a mood, oldest first.
+func (r *MoodRepository) ListEntryDates(ctx context.Context, userID string) ([]time.Time, error) {
+	const query = `SELECT entry_date FROM mood_entries WHERE user_id = $1 ORDER BY entry_date ASC`
+
+	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("listing entry dates: %w", err)
+	}
+	defer rows.Close()
+
+	var dates []time.Time
+	for rows.Next() {
+		var d time.Time
+		if err := rows.Scan(&d); err != nil {
+			return nil, err
+		}
+		dates = append(dates, d)
+	}
+	return dates, rows.Err()
+}
+
+// Stats returns the all-time average mood score and total entry count for a user.
+func (r *MoodRepository) Stats(ctx context.Context, userID string) (average float64, count int, err error) {
+	const query = `SELECT coalesce(avg(mood_score), 0), count(*) FROM mood_entries WHERE user_id = $1`
+
+	if err := r.db.QueryRow(ctx, query, userID).Scan(&average, &count); err != nil {
+		return 0, 0, fmt.Errorf("computing mood stats: %w", err)
+	}
+	return average, count, nil
+}
+
+// ListFeedForUserIDs returns recent mood entries for the given users, each paired
+// with the posting user's details, newest first.
+func (r *MoodRepository) ListFeedForUserIDs(ctx context.Context, userIDs []string, limit int) ([]models.FeedEntry, error) {
+	if len(userIDs) == 0 {
+		return nil, nil
+	}
+
+	const query = `
+		SELECT u.id, u.username, u.email, u.password_hash, u.avatar_url, u.bio, u.is_premium, u.created_at,
+		       m.id, m.user_id, m.mood_score, m.mood_emoji, m.note, m.entry_date, m.created_at
+		FROM mood_entries m
+		JOIN users u ON u.id = m.user_id
+		WHERE m.user_id = ANY($1)
+		ORDER BY m.entry_date DESC, m.created_at DESC
+		LIMIT $2`
+
+	rows, err := r.db.Query(ctx, query, userIDs, limit)
+	if err != nil {
+		return nil, fmt.Errorf("listing feed entries: %w", err)
+	}
+	defer rows.Close()
+
+	var entries []models.FeedEntry
+	for rows.Next() {
+		var fe models.FeedEntry
+		err := rows.Scan(
+			&fe.User.ID, &fe.User.Username, &fe.User.Email, &fe.User.PasswordHash,
+			&fe.User.AvatarURL, &fe.User.Bio, &fe.User.IsPremium, &fe.User.CreatedAt,
+			&fe.Mood.ID, &fe.Mood.UserID, &fe.Mood.Score, &fe.Mood.Emoji, &fe.Mood.Note,
+			&fe.Mood.EntryDate, &fe.Mood.CreatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scanning feed entry: %w", err)
+		}
+		entries = append(entries, fe)
+	}
+	return entries, rows.Err()
+}
+
 func collectMoodEntries(rows pgx.Rows) ([]models.MoodEntry, error) {
 	var entries []models.MoodEntry
 	for rows.Next() {

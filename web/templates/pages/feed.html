@@ -1,0 +1,23 @@
+<main class="feed-page">
+    <h1>Akış</h1>
+
+    {{if not .HasFriends}}
+    <p class="empty-state">Henüz arkadaşın yok. <a href="/friends">Arkadaş ekle</a> ve akışın canlansın.</p>
+    {{else if not .Entries}}
+    <p class="empty-state">Arkadaşların henüz mood paylaşmamış.</p>
+    {{else}}
+    <ul class="feed-list">
+        {{range .Entries}}
+        <li class="feed-card">
+            <span class="emoji">{{.Mood.Emoji}}</span>
+            <div class="feed-card-body">
+                <strong>@{{.User.Username}}</strong>
+                <span class="score">{{.Mood.Score}}/10</span>
+                <time>{{.Mood.EntryDate.Format "02 Jan 2006"}}</time>
+                {{if .Mood.NoteText}}<p class="note">{{.Mood.NoteText}}</p>{{end}}
+            </div>
+        </li>
+        {{end}}
+    </ul>
+    {{end}}
+</main>
