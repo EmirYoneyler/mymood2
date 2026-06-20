@@ -1,0 +1,19 @@
+<main class="auth-page">
+    <h1>Giriş Yap</h1>
+
+    {{if .Error}}
+    <p class="error">{{.Error}}</p>
+    {{end}}
+
+    <form method="POST" action="/login">
+        <label>E-posta</label>
+        <input type="email" name="email" required value="{{.Email}}">
+
+        <label>Şifre</label>
+        <input type="password" name="password" required>
+
+        <button type="submit">Giriş Yap</button>
+    </form>
+
+    <p>Hesabın yok mu? <a href="/register">Kayıt ol</a></p>
+</main>
