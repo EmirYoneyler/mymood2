@@ -57,7 +57,10 @@ func main() {
 
 func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	userRepo := repository.NewUserRepository(pool)
+	moodRepo := repository.NewMoodRepository(pool)
+
 	authHandler := handlers.NewAuthHandler(userRepo, cfg.JWTSecret, cfg.IsProduction())
+	moodHandler := handlers.NewMoodHandler(moodRepo)
 
 	authLimiter := limiter.New(limiter.Config{
 		Max:        10,
@@ -74,7 +77,12 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 		return c.Redirect("/login")
 	})
 
-	app.Get("/feed", custommw.RequireAuth(cfg.JWTSecret), func(c *fiber.Ctx) error {
+	requireAuth := custommw.RequireAuth(cfg.JWTSecret)
+
+	app.Get("/mood", requireAuth, moodHandler.ShowForm)
+	app.Post("/mood", requireAuth, moodHandler.Submit)
+
+	app.Get("/feed", requireAuth, func(c *fiber.Ctx) error {
 		return c.SendString("Feed - coming soon")
 	})
 }

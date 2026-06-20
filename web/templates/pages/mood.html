@@ -1,0 +1,29 @@
+<main class="mood-page">
+    <h1>Bugün nasılsın?</h1>
+
+    {{if .Saved}}
+    <p class="success">Mood'un kaydedildi!</p>
+    {{end}}
+    {{if .Error}}
+    <p class="error">{{.Error}}</p>
+    {{end}}
+
+    <form method="POST" action="/mood">
+        <div class="mood-scale">
+            {{range .MoodList}}
+            <label class="mood-option">
+                <input type="radio" name="score" value="{{.Score}}" {{if and $.Today (eq $.Today.Score .Score)}}checked{{end}} required>
+                <span class="emoji">{{.Emoji}}</span>
+                <span class="score">{{.Score}}</span>
+            </label>
+            {{end}}
+        </div>
+
+        <label>Not (opsiyonel)</label>
+        <textarea name="note" maxlength="280" placeholder="Günün nasıl geçti?">{{.NoteText}}</textarea>
+
+        <button type="submit">Kaydet</button>
+    </form>
+
+    <p><a href="/feed">Akışa dön</a></p>
+</main>
