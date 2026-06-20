@@ -1,0 +1,7 @@
+mymood.exe
+*.exe
+*.test
+*.out
+.env
+tmp/
+dist/
