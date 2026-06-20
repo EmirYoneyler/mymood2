@@ -1,29 +1,34 @@
-<main class="mood-page">
-    <h1>Bugün nasılsın?</h1>
+<main>
+    <h1 class="mb-1 text-2xl font-extrabold">Bugün nasılsın?</h1>
+    <p class="mb-6 text-sm text-slate-400">Puanını seç, istersen kısa bir not bırak.</p>
 
     {{if .Saved}}
-    <p class="success">Mood'un kaydedildi!</p>
+    <p class="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Mood'un kaydedildi!</p>
     {{end}}
     {{if .Error}}
-    <p class="error">{{.Error}}</p>
+    <p class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{{.Error}}</p>
     {{end}}
 
-    <form method="POST" action="/mood">
-        <div class="mood-scale">
+    <form method="POST" action="/mood" class="glass-card p-6 sm:p-8">
+        <div class="grid grid-cols-5 gap-2 sm:grid-cols-10">
             {{range .MoodList}}
-            <label class="mood-option">
-                <input type="radio" name="score" value="{{.Score}}" {{if and $.Today (eq $.Today.Score .Score)}}checked{{end}} required>
-                <span class="emoji">{{.Emoji}}</span>
-                <span class="score">{{.Score}}</span>
+            <label class="mood-option group flex cursor-pointer flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/5 py-3 transition hover:bg-white/10">
+                <input type="radio" name="score" value="{{.Score}}" class="peer sr-only"
+                    {{if and $.Today (eq $.Today.Score .Score)}}checked{{end}} required>
+                <span class="text-2xl transition-transform duration-150 group-hover:scale-125 peer-checked:scale-125 peer-active:scale-95">{{.Emoji}}</span>
+                <span class="text-xs font-semibold text-slate-400 peer-checked:text-fuchsia-300">{{.Score}}</span>
             </label>
             {{end}}
         </div>
 
-        <label>Not (opsiyonel)</label>
-        <textarea name="note" maxlength="280" placeholder="Günün nasıl geçti?">{{.NoteText}}</textarea>
+        <label class="mb-1 mt-6 block text-sm font-medium text-slate-300">Not (opsiyonel)</label>
+        <textarea name="note" maxlength="280" placeholder="Günün nasıl geçti?"
+            class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30"
+            rows="3">{{.NoteText}}</textarea>
 
-        <button type="submit">Kaydet</button>
+        <button type="submit"
+            class="mt-4 w-full rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-[0.98] sm:w-auto">
+            Kaydet
+        </button>
     </form>
-
-    <p><a href="/feed">Akışa dön</a></p>
 </main>

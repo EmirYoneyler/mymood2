@@ -1,19 +1,31 @@
-<main class="auth-page">
-    <h1>Giriş Yap</h1>
+<main class="flex min-h-[70vh] items-center justify-center">
+    <div class="glass-card w-full max-w-sm p-8">
+        <h1 class="mb-1 text-2xl font-extrabold">Giriş Yap</h1>
+        <p class="mb-6 text-sm text-slate-400">Gününü puanlamaya devam et.</p>
 
-    {{if .Error}}
-    <p class="error">{{.Error}}</p>
-    {{end}}
+        {{if .Error}}
+        <p class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{{.Error}}</p>
+        {{end}}
 
-    <form method="POST" action="/login">
-        <label>E-posta</label>
-        <input type="email" name="email" required value="{{.Email}}">
+        <form method="POST" action="/login" class="space-y-4">
+            <div>
+                <label class="mb-1 block text-sm font-medium text-slate-300">E-posta</label>
+                <input type="email" name="email" required value="{{.Email}}"
+                    class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
+            </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium text-slate-300">Şifre</label>
+                <input type="password" name="password" required
+                    class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
+            </div>
+            <button type="submit"
+                class="w-full rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-[0.98]">
+                Giriş Yap
+            </button>
+        </form>
 
-        <label>Şifre</label>
-        <input type="password" name="password" required>
-
-        <button type="submit">Giriş Yap</button>
-    </form>
-
-    <p>Hesabın yok mu? <a href="/register">Kayıt ol</a></p>
+        <p class="mt-6 text-center text-sm text-slate-400">
+            Hesabın yok mu? <a href="/register" class="font-medium text-fuchsia-400 hover:text-fuchsia-300">Kayıt ol</a>
+        </p>
+    </div>
 </main>

@@ -1,65 +1,69 @@
-<main class="friends-page">
-    <h1>Arkadaşlar {{if .Pending}}<span class="badge">{{len .Pending}}</span>{{end}}</h1>
+<main class="space-y-6">
+    <div class="flex items-center gap-2">
+        <h1 class="text-2xl font-extrabold">Arkadaşlar</h1>
+        {{if .Pending}}<span class="badge">{{len .Pending}}</span>{{end}}
+    </div>
 
-    <section class="friend-search">
-        <form method="GET" action="/friends">
-            <input type="text" name="q" placeholder="Kullanıcı adı ara..." value="{{.Query}}">
-            <button type="submit">Ara</button>
+    <section class="glass-card p-6">
+        <form method="GET" action="/friends" class="flex gap-2">
+            <input type="text" name="q" placeholder="Kullanıcı adı ara..." value="{{.Query}}"
+                class="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
+            <button type="submit" class="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95">Ara</button>
         </form>
 
         {{if .Results}}
-        <ul class="search-results">
+        <ul class="mt-4 divide-y divide-white/10">
             {{range .Results}}
-            <li>
-                <span>@{{.Username}}</span>
+            <li class="flex items-center justify-between py-3">
+                <span class="font-medium">@{{.Username}}</span>
                 <form method="POST" action="/friends/request">
                     <input type="hidden" name="username" value="{{.Username}}">
-                    <button type="submit">İstek Gönder</button>
+                    <button type="submit" class="rounded-lg border border-fuchsia-400/40 px-3 py-1.5 text-xs font-semibold text-fuchsia-300 transition hover:bg-fuchsia-400/10 active:scale-95">İstek Gönder</button>
                 </form>
             </li>
             {{end}}
         </ul>
         {{else if .Query}}
-        <p>Sonuç bulunamadı.</p>
+        <p class="mt-4 text-sm text-slate-400">Sonuç bulunamadı.</p>
         {{end}}
     </section>
 
     {{if .Pending}}
-    <section class="pending-requests">
-        <h2>Bekleyen İstekler</h2>
-        <ul>
+    <section class="glass-card p-6">
+        <h2 class="mb-3 text-lg font-bold">Bekleyen İstekler</h2>
+        <ul class="divide-y divide-white/10">
             {{range .Pending}}
-            <li>
-                <span>@{{.From.Username}}</span>
-                <form method="POST" action="/friends/{{.FriendshipID}}/accept">
-                    <button type="submit">Kabul Et</button>
-                </form>
-                <form method="POST" action="/friends/{{.FriendshipID}}/reject">
-                    <button type="submit">Reddet</button>
-                </form>
+            <li class="flex items-center justify-between py-3">
+                <span class="font-medium">@{{.From.Username}}</span>
+                <div class="flex gap-2">
+                    <form method="POST" action="/friends/{{.FriendshipID}}/accept">
+                        <button type="submit" class="rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95">Kabul Et</button>
+                    </form>
+                    <form method="POST" action="/friends/{{.FriendshipID}}/reject">
+                        <button type="submit" class="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-white/10 active:scale-95">Reddet</button>
+                    </form>
+                </div>
             </li>
             {{end}}
         </ul>
     </section>
     {{end}}
 
-    <section class="friend-list">
-        <h2>Arkadaşların</h2>
+    <section class="glass-card p-6">
+        <h2 class="mb-3 text-lg font-bold">Arkadaşların</h2>
         {{if .Friends}}
-        <ul>
+        <ul class="divide-y divide-white/10">
             {{range .Friends}}
-            <li>
-                <span>@{{.User.Username}}</span>
+            <li class="flex items-center justify-between py-3">
+                <span class="font-medium">@{{.User.Username}}</span>
                 <form method="POST" action="/friends/{{.FriendshipID}}/remove">
-                    <button type="submit">Arkadaşlıktan Çık</button>
+                    <button type="submit" class="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-400 transition hover:bg-white/10 hover:text-red-300 active:scale-95">Arkadaşlıktan Çık</button>
                 </form>
             </li>
             {{end}}
         </ul>
         {{else}}
-        <p>Henüz arkadaşın yok. Yukarıdan kullanıcı adıyla ara.</p>
+        <p class="text-sm text-slate-400">Henüz arkadaşın yok. Yukarıdan kullanıcı adıyla ara.</p>
         {{end}}
     </section>
-
-    <p><a href="/feed">Akışa dön</a></p>
 </main>

@@ -4,20 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>mymood</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: {
+                        base: '#0F0F14',
+                        surface: '#16161F',
+                    },
+                    backgroundImage: {
+                        'brand-gradient': 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+                    },
+                },
+            },
+        };
+    </script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
     <link rel="stylesheet" href="/static/css/app.css">
 </head>
-<body>
+<body hx-boost="true" class="min-h-screen bg-base text-slate-100 font-sans antialiased">
     {{if .ShowNav}}
-    <nav class="topnav">
-        <a href="/feed">Akış</a>
-        <a href="/mood">Bugün</a>
-        <a href="/friends">Arkadaşlar{{if .PendingCount}} <span class="badge">{{.PendingCount}}</span>{{end}}</a>
-        <a href="/profile">Profilim</a>
-        <form method="POST" action="/logout" class="inline-form">
-            <button type="submit">Çıkış</button>
-        </form>
+    <nav class="sticky top-0 z-50 border-b border-white/10 bg-base/80 backdrop-blur-md">
+        <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
+            <a href="/feed" class="bg-brand-gradient bg-clip-text text-xl font-extrabold text-transparent">mymood</a>
+            <div class="flex items-center gap-1 sm:gap-2">
+                <a href="/feed" class="nav-link">Akış</a>
+                <a href="/mood" class="nav-link">Bugün</a>
+                <a href="/friends" class="nav-link relative">
+                    Arkadaşlar
+                    {{if .PendingCount}}<span class="badge">{{.PendingCount}}</span>{{end}}
+                </a>
+                <a href="/profile" class="nav-link">Profilim</a>
+                <form method="POST" action="/logout" class="inline">
+                    <button type="submit" class="nav-link">Çıkış</button>
+                </form>
+            </div>
+        </div>
     </nav>
     {{end}}
-    {{embed}}
+    <div id="htmx-content" class="mx-auto max-w-5xl px-4 py-8">
+        {{embed}}
+    </div>
 </body>
 </html>

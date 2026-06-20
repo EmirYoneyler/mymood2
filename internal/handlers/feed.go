@@ -29,7 +29,8 @@ func (h *FeedHandler) Show(c *fiber.Ctx) error {
 	}
 
 	return c.Render("pages/feed", withNav(c.Context(), h.friendships, userID, fiber.Map{
-		"Entries":    entries,
-		"HasFriends": len(friendIDs) > 0,
+		"Entries":     entries,
+		"HasFriends":  len(friendIDs) > 0,
+		"FriendCount": len(friendIDs),
 	}), "layouts/base")
 }

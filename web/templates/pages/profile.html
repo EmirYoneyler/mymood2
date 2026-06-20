@@ -1,23 +1,23 @@
-<main class="profile-page">
-    <h1>Profilim</h1>
+<main class="space-y-6">
+    <h1 class="text-2xl font-extrabold">Profilim</h1>
 
-    <section class="stats">
-        <div class="stat-card">
-            <span class="stat-value">{{.AverageScore}}</span>
-            <span class="stat-label">Ortalama Mood</span>
+    <section class="grid grid-cols-3 gap-3 sm:gap-4">
+        <div class="glass-card p-4 text-center sm:p-6">
+            <span class="block text-2xl font-extrabold sm:text-3xl">{{.AverageScore}}</span>
+            <span class="text-xs text-slate-400 sm:text-sm">Ortalama Mood</span>
         </div>
-        <div class="stat-card">
-            <span class="stat-value">{{.LongestStreak}}</span>
-            <span class="stat-label">En Uzun Streak (gün)</span>
+        <div class="glass-card p-4 text-center sm:p-6">
+            <span class="block text-2xl font-extrabold sm:text-3xl">{{.LongestStreak}}</span>
+            <span class="text-xs text-slate-400 sm:text-sm">En Uzun Streak</span>
         </div>
-        <div class="stat-card">
-            <span class="stat-value">{{.TotalEntries}}</span>
-            <span class="stat-label">Toplam Giriş</span>
+        <div class="glass-card p-4 text-center sm:p-6">
+            <span class="block text-2xl font-extrabold sm:text-3xl">{{.TotalEntries}}</span>
+            <span class="text-xs text-slate-400 sm:text-sm">Toplam Giriş</span>
         </div>
     </section>
 
-    <section class="heatmap">
-        <h2>Mood Geçmişi</h2>
+    <section class="glass-card p-6">
+        <h2 class="mb-4 text-lg font-bold">Mood Geçmişi</h2>
         <div class="heatmap-grid">
             {{range .Weeks}}
             <div class="heatmap-week">
