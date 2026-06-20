@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS friendships;
+DROP TABLE IF EXISTS mood_entries;
+DROP TABLE IF EXISTS users;
