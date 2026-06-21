@@ -73,6 +73,7 @@ func (h *MoodHandler) ShowForm(c *fiber.Ctx) error {
 		"SelectedDate": entryDate,
 		"IsToday":      entryDate.Equal(todayDate()),
 		"MaxDate":      todayDate().Format("2006-01-02"),
+		"Saved":        c.Query("saved") == "1",
 	}), "layouts/base")
 }
 
@@ -95,19 +96,12 @@ func (h *MoodHandler) Submit(c *fiber.Ctx) error {
 		note = &form.Note
 	}
 
-	entry, err := h.moods.Upsert(c.Context(), userID, form.Score, models.MoodEmoji(form.Score), note, entryDate)
+	_, err := h.moods.Upsert(c.Context(), userID, form.Score, models.MoodEmoji(form.Score), note, entryDate)
 	if err != nil {
 		return h.renderError(c, userID, "Mood kaydedilemedi, lütfen tekrar dene.", entryDate)
 	}
 
-	return c.Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
-		"Today":        entry,
-		"NoteText":     noteText(entry),
-		"SelectedDate": entryDate,
-		"IsToday":      entryDate.Equal(todayDate()),
-		"MaxDate":      todayDate().Format("2006-01-02"),
-		"Saved":        true,
-	}), "layouts/base")
+	return c.Redirect("/mood?date=" + entryDate.Format("2006-01-02") + "&saved=1")
 }
 
 func (h *MoodHandler) renderError(c *fiber.Ctx, userID, message string, entryDate time.Time) error {

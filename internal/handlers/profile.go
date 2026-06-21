@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/emiryoneyler/mymood/internal/middleware"
@@ -117,6 +118,7 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		"YearAverage":     formatAverage(yearAvg, yearCount),
 		"Calendar":        buildYearCalendar(today.Year(), today, yearEntries, editable),
 		"Distribution":    buildDistribution(yearEntries),
+		"Legend":          buildLegend(),
 		"YearDaysTracked": yearCount,
 		"TrackingRate":    trackingRate,
 	}), "layouts/base")
@@ -186,8 +188,9 @@ func currentStreak(dates []time.Time, lastActivity time.Time, hasActivity bool, 
 	return streak
 }
 
-// bucketFor classifies a score into one of five buckets used for calendar
-// coloring and the distribution breakdown.
+// bucketFor classifies a score into one of five named buckets, used to group
+// the distribution breakdown and the legend (the calendar itself uses a
+// continuous gradient via scoreColor, not these discrete buckets).
 func bucketFor(score float64) (label, class string) {
 	switch {
 	case score >= 9:
@@ -203,13 +206,67 @@ func bucketFor(score float64) (label, class string) {
 	}
 }
 
+type rgbColor struct{ R, G, B int }
+
+func (c rgbColor) Hex() string {
+	return fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
+}
+
+// textColorFor picks black or white text for readable contrast against c.
+func (c rgbColor) textColor() string {
+	luminance := 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+	if luminance > 150 {
+		return "#1a1a1a"
+	}
+	return "#ffffff"
+}
+
+// scoreGradient maps a 1-10 score to a continuous color: dark red at the
+// bottom, through orange and yellow, to green, ending in turquoise at the top.
+// Stops are evenly spaced so every tenth of a point produces a visibly
+// different shade (e.g. 7.0 vs 7.5).
+var scoreGradientStops = []struct {
+	Pos   float64
+	Color rgbColor
+}{
+	{1.00, rgbColor{127, 29, 29}},  // dark red
+	{3.25, rgbColor{234, 88, 12}},  // orange
+	{5.50, rgbColor{250, 204, 21}}, // yellow
+	{7.75, rgbColor{34, 197, 94}},  // green
+	{10.00, rgbColor{6, 182, 212}}, // turquoise
+}
+
+func scoreGradient(score float64) rgbColor {
+	stops := scoreGradientStops
+	if score <= stops[0].Pos {
+		return stops[0].Color
+	}
+	for i := 1; i < len(stops); i++ {
+		if score <= stops[i].Pos {
+			prev, next := stops[i-1], stops[i]
+			t := (score - prev.Pos) / (next.Pos - prev.Pos)
+			return rgbColor{
+				R: lerp(prev.Color.R, next.Color.R, t),
+				G: lerp(prev.Color.G, next.Color.G, t),
+				B: lerp(prev.Color.B, next.Color.B, t),
+			}
+		}
+	}
+	return stops[len(stops)-1].Color
+}
+
+func lerp(a, b int, t float64) int {
+	return a + int(math.Round(float64(b-a)*t))
+}
+
 type calendarCell struct {
-	Valid     bool
-	Clickable bool
-	HasEntry  bool
-	ScoreText string
-	Bucket    string
-	DateParam string
+	Valid      bool
+	Clickable  bool
+	HasEntry   bool
+	ScoreText  string
+	Background string
+	TextColor  string
+	DateParam  string
 }
 
 type calendarRow struct {
@@ -255,7 +312,9 @@ func buildYearCalendar(year int, today time.Time, entries []models.MoodEntry, ed
 			if score, ok := scoreByDate[cell.DateParam]; ok {
 				cell.HasEntry = true
 				cell.ScoreText = fmt.Sprintf("%.1f", score)
-				_, cell.Bucket = bucketFor(score)
+				color := scoreGradient(score)
+				cell.Background = color.Hex()
+				cell.TextColor = color.textColor()
 				monthSums[month] += score
 				monthCounts[month]++
 			}
@@ -277,23 +336,35 @@ func buildYearCalendar(year int, today time.Time, entries []models.MoodEntry, ed
 	return yearCalendar{Year: year, MonthNames: monthNames, Rows: rows, MonthAverages: monthAverages}
 }
 
+// bucketRepresentative is a representative score for each named bucket, used
+// to pick a single swatch color (from the same gradient the calendar uses)
+// for the distribution and legend panels.
+var bucketRepresentative = map[string]float64{
+	"excellent": 9.5,
+	"great":     8.0,
+	"good":      6.0,
+	"low":       4.0,
+	"poor":      2.0,
+}
+
+var bucketOrder = []string{"excellent", "great", "good", "low", "poor"}
+
+var bucketLabels = map[string]string{
+	"excellent": "Mükemmel",
+	"great":     "Harika",
+	"good":      "İyi",
+	"low":       "Düşük",
+	"poor":      "Kötü",
+}
+
 type bucketStat struct {
 	Label string
-	Class string
+	Color string
 	Count int
 	Pct   int
 }
 
 func buildDistribution(entries []models.MoodEntry) []bucketStat {
-	order := []string{"excellent", "great", "good", "low", "poor"}
-	labels := map[string]string{
-		"excellent": "Mükemmel",
-		"great":     "Harika",
-		"good":      "İyi",
-		"low":       "Düşük",
-		"poor":      "Kötü",
-	}
-
 	counts := map[string]int{}
 	for _, e := range entries {
 		_, class := bucketFor(e.Score)
@@ -301,14 +372,45 @@ func buildDistribution(entries []models.MoodEntry) []bucketStat {
 	}
 
 	total := len(entries)
-	stats := make([]bucketStat, 0, len(order))
-	for _, class := range order {
+	stats := make([]bucketStat, 0, len(bucketOrder))
+	for _, class := range bucketOrder {
 		pct := 0
 		if total > 0 {
 			pct = int(float64(counts[class]) / float64(total) * 100)
 		}
-		stats = append(stats, bucketStat{Label: labels[class], Class: class, Count: counts[class], Pct: pct})
+		stats = append(stats, bucketStat{
+			Label: bucketLabels[class],
+			Color: scoreGradient(bucketRepresentative[class]).Hex(),
+			Count: counts[class],
+			Pct:   pct,
+		})
 	}
 
 	return stats
+}
+
+type legendItem struct {
+	Range string
+	Label string
+	Color string
+}
+
+func buildLegend() []legendItem {
+	ranges := map[string]string{
+		"excellent": "9-10",
+		"great":     "7-8.9",
+		"good":      "5-6.9",
+		"low":       "3-4.9",
+		"poor":      "1-2.9",
+	}
+
+	items := make([]legendItem, 0, len(bucketOrder))
+	for _, class := range bucketOrder {
+		items = append(items, legendItem{
+			Range: ranges[class],
+			Label: bucketLabels[class],
+			Color: scoreGradient(bucketRepresentative[class]).Hex(),
+		})
+	}
+	return items
 }

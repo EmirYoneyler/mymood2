@@ -58,11 +58,19 @@
                             {{range .Cells}}
                             <td>
                                 {{if .Valid}}
+                                {{if .HasEntry}}
                                 {{if .Clickable}}
-                                <a href="/mood?date={{.DateParam}}"
-                                    class="cal-cell {{if .HasEntry}}cal-{{.Bucket}}{{else}}cal-empty{{end}}">{{.ScoreText}}</a>
+                                <a href="/mood?date={{.DateParam}}" class="cal-cell"
+                                    style="background-color:{{.Background}};color:{{.TextColor}}">{{.ScoreText}}</a>
                                 {{else}}
-                                <div class="cal-cell {{if .HasEntry}}cal-{{.Bucket}}{{else}}cal-empty{{end}}">{{.ScoreText}}</div>
+                                <div class="cal-cell" style="background-color:{{.Background}};color:{{.TextColor}}">{{.ScoreText}}</div>
+                                {{end}}
+                                {{else}}
+                                {{if .Clickable}}
+                                <a href="/mood?date={{.DateParam}}" class="cal-cell cal-empty"></a>
+                                {{else}}
+                                <div class="cal-cell cal-empty"></div>
+                                {{end}}
                                 {{end}}
                                 {{end}}
                             </td>
@@ -86,7 +94,7 @@
                 <ul class="space-y-2">
                     {{range .Distribution}}
                     <li class="flex items-center justify-between text-sm">
-                        <span><span class="legend-swatch cal-{{.Class}}"></span>{{.Label}}</span>
+                        <span><span class="legend-swatch" style="background-color:{{.Color}}"></span>{{.Label}}</span>
                         <span class="text-slate-400">{{.Count}} · %{{.Pct}}</span>
                     </li>
                     {{end}}
@@ -105,11 +113,9 @@
             <div class="glass-card p-5">
                 <h3 class="mb-3 text-sm font-bold text-slate-300">Lejant</h3>
                 <ul class="space-y-1.5 text-xs text-slate-400">
-                    <li><span class="legend-swatch cal-excellent"></span>9-10 Mükemmel</li>
-                    <li><span class="legend-swatch cal-great"></span>7-8.9 Harika</li>
-                    <li><span class="legend-swatch cal-good"></span>5-6.9 İyi</li>
-                    <li><span class="legend-swatch cal-low"></span>3-4.9 Düşük</li>
-                    <li><span class="legend-swatch cal-poor"></span>1-2.9 Kötü</li>
+                    {{range .Legend}}
+                    <li><span class="legend-swatch" style="background-color:{{.Color}}"></span>{{.Range}} {{.Label}}</li>
+                    {{end}}
                     <li><span class="legend-swatch cal-empty"></span>Boş</li>
                 </ul>
             </div>

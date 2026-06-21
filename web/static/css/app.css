@@ -98,11 +98,6 @@ a.cal-cell:hover {
 }
 
 .cal-empty { background-color: rgba(255, 255, 255, 0.05); }
-.cal-poor { background-color: #7f1d1d; }
-.cal-low { background-color: #c2410c; }
-.cal-good { background-color: #b45309; }
-.cal-great { background-color: #15803d; }
-.cal-excellent { background-color: #0891b2; }
 
 .calendar-table .month-avg {
     color: rgba(226, 232, 240, 0.7);
