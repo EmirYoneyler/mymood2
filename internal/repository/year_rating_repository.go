@@ -44,6 +44,29 @@ func (r *YearRatingRepository) GetByYear(ctx context.Context, userID string, yea
 	return rating, err
 }
 
+// ListByUser returns all of a user's year ratings, newest year first.
+func (r *YearRatingRepository) ListByUser(ctx context.Context, userID string) ([]models.YearRating, error) {
+	const query = `
+		SELECT id, user_id, year, score, note, created_at
+		FROM year_ratings WHERE user_id = $1 ORDER BY year DESC`
+
+	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("listing year ratings: %w", err)
+	}
+	defer rows.Close()
+
+	var ratings []models.YearRating
+	for rows.Next() {
+		yr, err := scanYearRating(rows)
+		if err != nil {
+			return nil, err
+		}
+		ratings = append(ratings, *yr)
+	}
+	return ratings, rows.Err()
+}
+
 // Delete removes a user's rating for the given year, if any.
 func (r *YearRatingRepository) Delete(ctx context.Context, userID string, year int) error {
 	const query = `DELETE FROM year_ratings WHERE user_id = $1 AND year = $2`

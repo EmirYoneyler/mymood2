@@ -17,11 +17,10 @@ type ProfileHandler struct {
 	moods       *repository.MoodRepository
 	friendships *repository.FriendshipRepository
 	users       *repository.UserRepository
-	yearRatings *repository.YearRatingRepository
 }
 
-func NewProfileHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository, users *repository.UserRepository, yearRatings *repository.YearRatingRepository) *ProfileHandler {
-	return &ProfileHandler{moods: moods, friendships: friendships, users: users, yearRatings: yearRatings}
+func NewProfileHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository, users *repository.UserRepository) *ProfileHandler {
+	return &ProfileHandler{moods: moods, friendships: friendships, users: users}
 }
 
 // inactivityLimit is how long a user can go without logging a mood before
@@ -127,11 +126,6 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		trackingRate = int(float64(viewYearCount) / float64(daysElapsedInViewYear) * 100)
 	}
 
-	yearRating, err := h.yearRatings.GetByYear(ctx, targetID, viewYear)
-	if err != nil && !errors.Is(err, repository.ErrNotFound) {
-		return fiber.ErrInternalServerError
-	}
-
 	data := fiber.Map{
 		"Editable":        editable,
 		"Username":        username,
@@ -153,8 +147,6 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		"ViewYearAverage": formatAverage(viewYearAvg, viewYearCount),
 		"YearDaysTracked": viewYearCount,
 		"TrackingRate":    trackingRate,
-		"YearRating":      yearRating,
-		"YearRatingNote":  noteTextFromYearRating(yearRating),
 	}
 	for k, v := range flash {
 		data[k] = v
@@ -183,13 +175,6 @@ func summarizeEntries(entries []models.MoodEntry) (average float64, count int) {
 		sum += e.Score
 	}
 	return sum / float64(count), count
-}
-
-func noteTextFromYearRating(rating *models.YearRating) string {
-	if rating == nil {
-		return ""
-	}
-	return rating.NoteText()
 }
 
 func formatAverage(average float64, count int) string {

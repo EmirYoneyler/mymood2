@@ -77,10 +77,11 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	moodHandler := handlers.NewMoodHandler(moodRepo, friendshipRepo)
 	friendHandler := handlers.NewFriendHandler(userRepo, friendshipRepo)
 	feedHandler := handlers.NewFeedHandler(moodRepo, friendshipRepo)
-	profileHandler := handlers.NewProfileHandler(moodRepo, friendshipRepo, userRepo, yearRatingRepo)
+	profileHandler := handlers.NewProfileHandler(moodRepo, friendshipRepo, userRepo)
 	settingsHandler := handlers.NewSettingsHandler(userRepo, friendshipRepo, cfg.IsProduction())
 	yearRatingHandler := handlers.NewYearRatingHandler(yearRatingRepo)
 	monthsHandler := handlers.NewMonthsHandler(moodRepo, friendshipRepo)
+	yearsHandler := handlers.NewYearsHandler(moodRepo, yearRatingRepo, friendshipRepo)
 
 	authLimiter := limiter.New(limiter.Config{
 		Max:        10,
@@ -99,8 +100,11 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	app.Post("/login", authLimiter, authHandler.Login)
 	app.Post("/logout", authHandler.Logout)
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.Redirect("/login")
+	app.Get("/", custommw.LoadSession(cfg.JWTSecret), func(c *fiber.Ctx) error {
+		if _, ok := custommw.UserIDFromContext(c); ok {
+			return c.Redirect("/feed")
+		}
+		return c.Render("pages/landing", fiber.Map{}, "layouts/base")
 	})
 
 	requireAuth := custommw.RequireAuth(cfg.JWTSecret)
@@ -118,6 +122,7 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	app.Get("/feed", requireAuth, feedHandler.Show)
 	app.Get("/profile", requireAuth, profileHandler.Show)
 	app.Get("/profile/months", requireAuth, monthsHandler.Show)
+	app.Get("/profile/years", requireAuth, yearsHandler.Show)
 	app.Post("/profile/year-rating", requireAuth, yearRatingHandler.Submit)
 	app.Post("/profile/year-rating/delete", requireAuth, yearRatingHandler.Delete)
 	app.Get("/profile/:username", requireAuth, profileHandler.ShowFriend)

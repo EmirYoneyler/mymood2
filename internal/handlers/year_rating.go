@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"fmt"
-
 	"github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/repository"
 	"github.com/go-playground/validator/v10"
@@ -31,11 +29,11 @@ func (h *YearRatingHandler) Submit(c *fiber.Ctx) error {
 
 	var form yearRatingForm
 	if err := c.BodyParser(&form); err != nil {
-		return c.Redirect("/profile")
+		return c.Redirect("/profile/years")
 	}
 
 	if err := h.validate.Struct(form); err != nil {
-		return c.Redirect(fmt.Sprintf("/profile?year=%d", form.Year))
+		return c.Redirect("/profile/years")
 	}
 
 	var note *string
@@ -47,7 +45,7 @@ func (h *YearRatingHandler) Submit(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	return c.Redirect(fmt.Sprintf("/profile?year=%d&saved=1", form.Year))
+	return c.Redirect("/profile/years?saved=1")
 }
 
 type yearRatingDeleteForm struct {
@@ -59,12 +57,12 @@ func (h *YearRatingHandler) Delete(c *fiber.Ctx) error {
 
 	var form yearRatingDeleteForm
 	if err := c.BodyParser(&form); err != nil {
-		return c.Redirect("/profile")
+		return c.Redirect("/profile/years")
 	}
 
 	if err := h.ratings.Delete(c.Context(), userID, form.Year); err != nil {
 		return fiber.ErrInternalServerError
 	}
 
-	return c.Redirect(fmt.Sprintf("/profile?year=%d&removed=1", form.Year))
+	return c.Redirect("/profile/years?removed=1")
 }

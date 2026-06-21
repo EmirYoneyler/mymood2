@@ -1,0 +1,46 @@
+<main class="space-y-6">
+    <div class="flex items-center gap-3">
+        <a href="/profile" class="text-sm text-fuchsia-400 hover:text-fuchsia-300">← Profilime dön</a>
+    </div>
+    <div>
+        <h1 class="text-2xl font-extrabold">Yıllık Notlar</h1>
+        <p class="mt-1 text-sm text-slate-400">Geçmiş bir yılı günlük girişlerden bağımsız, bütünsel olarak puanla (örn. "2024 harika bir yıldı, 8 veririm"). Bu yıl her zaman güncel girdilerinin ortalamasıdır.</p>
+    </div>
+
+    {{if .Saved}}
+    <p class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Yıl notu kaydedildi!</p>
+    {{end}}
+    {{if .Removed}}
+    <p class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">Yıl notu kaldırıldı.</p>
+    {{end}}
+
+    <section class="glass-card divide-y divide-white/10 p-2">
+        {{range .Years}}
+        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <a href="/profile?year={{.Year}}" class="font-medium hover:text-fuchsia-300">{{.Year}}{{if .IsCurrent}} <span class="text-xs text-slate-500">(bu yıl, otomatik)</span>{{end}}</a>
+
+            {{if .IsCurrent}}
+            <span class="font-bold text-fuchsia-300">{{.ScoreText}}</span>
+            {{else}}
+            <div class="flex items-center gap-2">
+                <span class="font-bold {{if .HasRating}}text-cyan-300{{else}}text-slate-500{{end}}">{{.ScoreText}}</span>
+                <form method="POST" action="/profile/year-rating" class="flex items-center gap-2">
+                    <input type="hidden" name="year" value="{{.Year}}">
+                    <input type="number" name="score" min="1" max="10" step="0.1" required placeholder="Puan"
+                        class="w-20 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
+                    <input type="text" name="note" maxlength="280" value="{{.NoteText}}" placeholder="Not (opsiyonel)"
+                        class="hidden w-40 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30 sm:block">
+                    <button type="submit" class="rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95">{{if .HasRating}}Güncelle{{else}}Puan Ver{{end}}</button>
+                </form>
+                {{if .HasRating}}
+                <form method="POST" action="/profile/year-rating/delete">
+                    <input type="hidden" name="year" value="{{.Year}}">
+                    <button type="submit" class="rounded-lg border border-white/15 px-2 py-1.5 text-xs font-semibold text-slate-400 transition hover:bg-white/10 hover:text-red-300 active:scale-95">Kaldır</button>
+                </form>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+        {{end}}
+    </section>
+</main>
