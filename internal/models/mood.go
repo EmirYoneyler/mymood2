@@ -29,6 +29,19 @@ func (e MoodEntry) ScoreText() string {
 	return fmt.Sprintf("%.1f", e.Score)
 }
 
+// MonthSummary is a user's average mood and entry count for a single
+// calendar month, used by the monthly breakdown view.
+type MonthSummary struct {
+	Month   time.Time
+	Average float64
+	Count   int
+}
+
+// AverageText formats the month's average with a single decimal place.
+func (m MonthSummary) AverageText() string {
+	return fmt.Sprintf("%.1f", m.Average)
+}
+
 // MoodEmoji returns the emoji associated with a 1.0-10.0 mood score,
 // rounded to the nearest whole point.
 func MoodEmoji(score float64) string {

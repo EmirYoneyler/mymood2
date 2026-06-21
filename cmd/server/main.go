@@ -61,13 +61,16 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	userRepo := repository.NewUserRepository(pool)
 	moodRepo := repository.NewMoodRepository(pool)
 	friendshipRepo := repository.NewFriendshipRepository(pool)
+	yearRatingRepo := repository.NewYearRatingRepository(pool)
 
 	authHandler := handlers.NewAuthHandler(userRepo, cfg.JWTSecret, cfg.IsProduction())
 	moodHandler := handlers.NewMoodHandler(moodRepo, friendshipRepo)
 	friendHandler := handlers.NewFriendHandler(userRepo, friendshipRepo)
 	feedHandler := handlers.NewFeedHandler(moodRepo, friendshipRepo)
-	profileHandler := handlers.NewProfileHandler(moodRepo, friendshipRepo, userRepo)
+	profileHandler := handlers.NewProfileHandler(moodRepo, friendshipRepo, userRepo, yearRatingRepo)
 	settingsHandler := handlers.NewSettingsHandler(userRepo, friendshipRepo, cfg.IsProduction())
+	yearRatingHandler := handlers.NewYearRatingHandler(yearRatingRepo)
+	monthsHandler := handlers.NewMonthsHandler(moodRepo, friendshipRepo)
 
 	authLimiter := limiter.New(limiter.Config{
 		Max:        10,
@@ -104,6 +107,9 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 
 	app.Get("/feed", requireAuth, feedHandler.Show)
 	app.Get("/profile", requireAuth, profileHandler.Show)
+	app.Get("/profile/months", requireAuth, monthsHandler.Show)
+	app.Post("/profile/year-rating", requireAuth, yearRatingHandler.Submit)
+	app.Post("/profile/year-rating/delete", requireAuth, yearRatingHandler.Delete)
 	app.Get("/profile/:username", requireAuth, profileHandler.ShowFriend)
 
 	app.Get("/settings", requireAuth, settingsHandler.Show)

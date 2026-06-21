@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"time"
 
 	"github.com/emiryoneyler/mymood/internal/middleware"
@@ -16,15 +17,19 @@ type ProfileHandler struct {
 	moods       *repository.MoodRepository
 	friendships *repository.FriendshipRepository
 	users       *repository.UserRepository
+	yearRatings *repository.YearRatingRepository
 }
 
-func NewProfileHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository, users *repository.UserRepository) *ProfileHandler {
-	return &ProfileHandler{moods: moods, friendships: friendships, users: users}
+func NewProfileHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository, users *repository.UserRepository, yearRatings *repository.YearRatingRepository) *ProfileHandler {
+	return &ProfileHandler{moods: moods, friendships: friendships, users: users, yearRatings: yearRatings}
 }
 
 // inactivityLimit is how long a user can go without logging a mood before
 // their current streak resets to zero.
 const inactivityLimit = 36 * time.Hour
+
+// maxYearsBack bounds how far back you can browse/rate the calendar archive.
+const maxYearsBack = 80
 
 // Show renders the logged-in user's own profile.
 func (h *ProfileHandler) Show(c *fiber.Ctx) error {
@@ -83,8 +88,7 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		return fiber.ErrInternalServerError
 	}
 
-	yearStart := startOfYear(today)
-	yearAvg, yearCount, err := h.moods.StatsBetween(ctx, targetID, yearStart, today)
+	yearAvg, yearCount, err := h.moods.StatsBetween(ctx, targetID, startOfYear(today), today)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
@@ -99,15 +103,33 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		return fiber.ErrInternalServerError
 	}
 
-	yearEntries, err := h.moods.ListByUserSince(ctx, targetID, yearStart)
+	currentYear := today.Year()
+	viewYear := currentYear
+	if y, parseErr := strconv.Atoi(c.Query("year")); parseErr == nil {
+		viewYear = clampYear(y, currentYear-maxYearsBack, currentYear)
+	}
+
+	viewYearStart := time.Date(viewYear, time.January, 1, 0, 0, 0, 0, time.UTC)
+	viewYearEnd := time.Date(viewYear, time.December, 31, 0, 0, 0, 0, time.UTC)
+	if viewYear == currentYear {
+		viewYearEnd = today
+	}
+
+	viewYearEntries, err := h.moods.ListBetween(ctx, targetID, viewYearStart, viewYearEnd)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
 
-	daysElapsedInYear := int(today.Sub(yearStart).Hours()/24) + 1
+	viewYearAvg, viewYearCount := summarizeEntries(viewYearEntries)
+	daysElapsedInViewYear := int(viewYearEnd.Sub(viewYearStart).Hours()/24) + 1
 	trackingRate := 0
-	if daysElapsedInYear > 0 {
-		trackingRate = int(float64(yearCount) / float64(daysElapsedInYear) * 100)
+	if daysElapsedInViewYear > 0 {
+		trackingRate = int(float64(viewYearCount) / float64(daysElapsedInViewYear) * 100)
+	}
+
+	yearRating, err := h.yearRatings.GetByYear(ctx, targetID, viewYear)
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		return fiber.ErrInternalServerError
 	}
 
 	data := fiber.Map{
@@ -120,17 +142,54 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		"WeekAverage":     formatAverage(weekAvg, weekCount),
 		"MonthAverage":    formatAverage(monthAvg, monthCount),
 		"YearAverage":     formatAverage(yearAvg, yearCount),
-		"Calendar":        buildYearCalendar(today.Year(), today, yearEntries, editable),
-		"Distribution":    buildDistribution(yearEntries),
+		"Calendar":        buildYearCalendar(viewYear, today, viewYearEntries, editable),
+		"Distribution":    buildDistribution(viewYearEntries),
 		"Legend":          buildLegend(),
-		"YearDaysTracked": yearCount,
+		"ViewYear":        viewYear,
+		"PrevYear":        viewYear - 1,
+		"NextYear":        viewYear + 1,
+		"HasNextYear":     viewYear < currentYear,
+		"CanGoBack":       viewYear > currentYear-maxYearsBack,
+		"ViewYearAverage": formatAverage(viewYearAvg, viewYearCount),
+		"YearDaysTracked": viewYearCount,
 		"TrackingRate":    trackingRate,
+		"YearRating":      yearRating,
+		"YearRatingNote":  noteTextFromYearRating(yearRating),
 	}
 	for k, v := range flash {
 		data[k] = v
 	}
 
 	return c.Render("pages/profile", withNav(ctx, h.friendships, viewerID, data), "layouts/base")
+}
+
+func clampYear(year, min, max int) int {
+	if year < min {
+		return min
+	}
+	if year > max {
+		return max
+	}
+	return year
+}
+
+func summarizeEntries(entries []models.MoodEntry) (average float64, count int) {
+	count = len(entries)
+	if count == 0 {
+		return 0, 0
+	}
+	var sum float64
+	for _, e := range entries {
+		sum += e.Score
+	}
+	return sum / float64(count), count
+}
+
+func noteTextFromYearRating(rating *models.YearRating) string {
+	if rating == nil {
+		return ""
+	}
+	return rating.NoteText()
 }
 
 func formatAverage(average float64, count int) string {

@@ -95,17 +95,17 @@ func (r *MoodRepository) ListByUserIDs(ctx context.Context, userIDs []string, li
 	return collectMoodEntries(rows)
 }
 
-// ListByUserSince returns a user's mood entries from the given date onward, oldest first.
-func (r *MoodRepository) ListByUserSince(ctx context.Context, userID string, since time.Time) ([]models.MoodEntry, error) {
+// ListBetween returns a user's mood entries within an inclusive date range, oldest first.
+func (r *MoodRepository) ListBetween(ctx context.Context, userID string, start, end time.Time) ([]models.MoodEntry, error) {
 	const query = `
 		SELECT id, user_id, mood_score, mood_emoji, note, entry_date, created_at
 		FROM mood_entries
-		WHERE user_id = $1 AND entry_date >= $2
+		WHERE user_id = $1 AND entry_date BETWEEN $2 AND $3
 		ORDER BY entry_date ASC`
 
-	rows, err := r.db.Query(ctx, query, userID, since)
+	rows, err := r.db.Query(ctx, query, userID, start, end)
 	if err != nil {
-		return nil, fmt.Errorf("listing mood entries since: %w", err)
+		return nil, fmt.Errorf("listing mood entries between: %w", err)
 	}
 	defer rows.Close()
 
@@ -170,6 +170,33 @@ func (r *MoodRepository) StatsBetween(ctx context.Context, userID string, start,
 		return 0, 0, fmt.Errorf("computing mood stats between: %w", err)
 	}
 	return average, count, nil
+}
+
+// MonthlyBreakdown returns a user's average mood and entry count for every
+// calendar month that has at least one entry, newest month first.
+func (r *MoodRepository) MonthlyBreakdown(ctx context.Context, userID string) ([]models.MonthSummary, error) {
+	const query = `
+		SELECT date_trunc('month', entry_date) AS month, avg(mood_score), count(*)
+		FROM mood_entries
+		WHERE user_id = $1
+		GROUP BY month
+		ORDER BY month DESC`
+
+	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("computing monthly breakdown: %w", err)
+	}
+	defer rows.Close()
+
+	var summaries []models.MonthSummary
+	for rows.Next() {
+		var s models.MonthSummary
+		if err := rows.Scan(&s.Month, &s.Average, &s.Count); err != nil {
+			return nil, fmt.Errorf("scanning month summary: %w", err)
+		}
+		summaries = append(summaries, s)
+	}
+	return summaries, rows.Err()
 }
 
 // ListFeedForUserIDs returns recent mood entries for the given users, each paired
