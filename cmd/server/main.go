@@ -85,6 +85,7 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 
 	app.Get("/mood", requireAuth, moodHandler.ShowForm)
 	app.Post("/mood", requireAuth, moodHandler.Submit)
+	app.Post("/mood/delete", requireAuth, moodHandler.Delete)
 
 	app.Get("/friends", requireAuth, friendHandler.ShowFriends)
 	app.Post("/friends/request", requireAuth, friendHandler.SendRequest)

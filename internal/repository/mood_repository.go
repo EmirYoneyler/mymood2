@@ -32,6 +32,16 @@ func (r *MoodRepository) Upsert(ctx context.Context, userID string, score float6
 	return scanMoodEntry(row)
 }
 
+// Delete removes a user's mood entry for the given date, if any.
+func (r *MoodRepository) Delete(ctx context.Context, userID string, entryDate time.Time) error {
+	const query = `DELETE FROM mood_entries WHERE user_id = $1 AND entry_date = $2`
+
+	if _, err := r.db.Exec(ctx, query, userID, entryDate); err != nil {
+		return fmt.Errorf("deleting mood entry: %w", err)
+	}
+	return nil
+}
+
 func (r *MoodRepository) GetByUserAndDate(ctx context.Context, userID string, entryDate time.Time) (*models.MoodEntry, error) {
 	const query = `
 		SELECT id, user_id, mood_score, mood_emoji, note, entry_date, created_at

@@ -29,7 +29,11 @@ const inactivityLimit = 36 * time.Hour
 // Show renders the logged-in user's own profile.
 func (h *ProfileHandler) Show(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
-	return h.renderProfile(c, userID, userID, "", true)
+	flash := fiber.Map{
+		"Saved":   c.Query("saved") == "1",
+		"Removed": c.Query("removed") == "1",
+	}
+	return h.renderProfile(c, userID, userID, "", true, flash)
 }
 
 // ShowFriend renders another user's profile, restricted to accepted friends.
@@ -57,10 +61,10 @@ func (h *ProfileHandler) ShowFriend(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	return h.renderProfile(c, viewerID, target.ID, target.Username, false)
+	return h.renderProfile(c, viewerID, target.ID, target.Username, false, fiber.Map{})
 }
 
-func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, username string, editable bool) error {
+func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, username string, editable bool, flash fiber.Map) error {
 	ctx := c.Context()
 	today := todayDate()
 
@@ -106,7 +110,7 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		trackingRate = int(float64(yearCount) / float64(daysElapsedInYear) * 100)
 	}
 
-	return c.Render("pages/profile", withNav(ctx, h.friendships, viewerID, fiber.Map{
+	data := fiber.Map{
 		"Editable":        editable,
 		"Username":        username,
 		"AverageScore":    fmt.Sprintf("%.1f", average),
@@ -121,7 +125,12 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		"Legend":          buildLegend(),
 		"YearDaysTracked": yearCount,
 		"TrackingRate":    trackingRate,
-	}), "layouts/base")
+	}
+	for k, v := range flash {
+		data[k] = v
+	}
+
+	return c.Render("pages/profile", withNav(ctx, h.friendships, viewerID, data), "layouts/base")
 }
 
 func formatAverage(average float64, count int) string {
@@ -212,28 +221,21 @@ func (c rgbColor) Hex() string {
 	return fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
 }
 
-// textColorFor picks black or white text for readable contrast against c.
-func (c rgbColor) textColor() string {
-	luminance := 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
-	if luminance > 150 {
-		return "#1a1a1a"
-	}
-	return "#ffffff"
-}
-
-// scoreGradient maps a 1-10 score to a continuous color: dark red at the
+// scoreGradient maps a 1-10 score to a continuous, vivid color: red at the
 // bottom, through orange and yellow, to green, ending in turquoise at the top.
 // Stops are evenly spaced so every tenth of a point produces a visibly
-// different shade (e.g. 7.0 vs 7.5).
+// different shade (e.g. 7.0 vs 7.5). Cell text is always white (see
+// app.css .cal-cell text-shadow) so contrast stays consistent across the
+// whole gradient instead of flipping between black/white per cell.
 var scoreGradientStops = []struct {
 	Pos   float64
 	Color rgbColor
 }{
-	{1.00, rgbColor{127, 29, 29}},  // dark red
-	{3.25, rgbColor{234, 88, 12}},  // orange
-	{5.50, rgbColor{250, 204, 21}}, // yellow
-	{7.75, rgbColor{34, 197, 94}},  // green
-	{10.00, rgbColor{6, 182, 212}}, // turquoise
+	{1.00, rgbColor{220, 38, 38}},   // vivid red
+	{3.25, rgbColor{249, 115, 22}},  // vivid orange
+	{5.50, rgbColor{250, 204, 21}},  // vivid yellow
+	{7.75, rgbColor{34, 197, 94}},   // vivid green
+	{10.00, rgbColor{34, 211, 238}}, // vivid turquoise
 }
 
 func scoreGradient(score float64) rgbColor {
@@ -265,7 +267,6 @@ type calendarCell struct {
 	HasEntry   bool
 	ScoreText  string
 	Background string
-	TextColor  string
 	DateParam  string
 }
 
@@ -312,9 +313,7 @@ func buildYearCalendar(year int, today time.Time, entries []models.MoodEntry, ed
 			if score, ok := scoreByDate[cell.DateParam]; ok {
 				cell.HasEntry = true
 				cell.ScoreText = fmt.Sprintf("%.1f", score)
-				color := scoreGradient(score)
-				cell.Background = color.Hex()
-				cell.TextColor = color.textColor()
+				cell.Background = scoreGradient(score).Hex()
 				monthSums[month] += score
 				monthCounts[month]++
 			}

@@ -31,6 +31,10 @@ type moodForm struct {
 	EntryDate string  `form:"entry_date"`
 }
 
+type deleteForm struct {
+	EntryDate string `form:"entry_date"`
+}
+
 func todayDate() time.Time {
 	now := time.Now().UTC()
 	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
@@ -73,7 +77,6 @@ func (h *MoodHandler) ShowForm(c *fiber.Ctx) error {
 		"SelectedDate": entryDate,
 		"IsToday":      entryDate.Equal(todayDate()),
 		"MaxDate":      todayDate().Format("2006-01-02"),
-		"Saved":        c.Query("saved") == "1",
 	}), "layouts/base")
 }
 
@@ -101,7 +104,26 @@ func (h *MoodHandler) Submit(c *fiber.Ctx) error {
 		return h.renderError(c, userID, "Mood kaydedilemedi, lütfen tekrar dene.", entryDate)
 	}
 
-	return c.Redirect("/mood?date=" + entryDate.Format("2006-01-02") + "&saved=1")
+	return c.Redirect("/profile?saved=1")
+}
+
+// Delete removes the mood entry for the given date, so the user can clear a
+// wrongly-entered score and leave the day blank again.
+func (h *MoodHandler) Delete(c *fiber.Ctx) error {
+	userID, _ := middleware.UserIDFromContext(c)
+
+	var form deleteForm
+	if err := c.BodyParser(&form); err != nil {
+		return c.Redirect("/profile")
+	}
+
+	entryDate := parseEntryDate(form.EntryDate)
+
+	if err := h.moods.Delete(c.Context(), userID, entryDate); err != nil {
+		return fiber.ErrInternalServerError
+	}
+
+	return c.Redirect("/profile?removed=1")
 }
 
 func (h *MoodHandler) renderError(c *fiber.Ctx, userID, message string, entryDate time.Time) error {

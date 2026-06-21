@@ -14,9 +14,6 @@
         </form>
     </div>
 
-    {{if .Saved}}
-    <p class="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Mood'un kaydedildi!</p>
-    {{end}}
     {{if .Error}}
     <p class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{{.Error}}</p>
     {{end}}
@@ -45,10 +42,20 @@
             rows="3">{{.NoteText}}</textarea>
 
         <button type="submit"
-            class="mt-4 w-full rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-[0.98] sm:w-auto">
+            class="mt-4 rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-[0.98]">
             Kaydet
         </button>
     </form>
+
+    {{if .Today}}
+    <form method="POST" action="/mood/delete" class="mt-3">
+        <input type="hidden" name="entry_date" value="{{.SelectedDate.Format "2006-01-02"}}">
+        <button type="submit"
+            class="rounded-xl border border-red-400/30 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-400/10 active:scale-[0.98]">
+            Puanı Kaldır
+        </button>
+    </form>
+    {{end}}
 
     <script>
         (function () {

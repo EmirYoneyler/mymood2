@@ -3,6 +3,13 @@
         {{if .Username}}@{{.Username}} Profili{{else}}Profilim{{end}}
     </h1>
 
+    {{if .Saved}}
+    <p class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Mood'un kaydedildi!</p>
+    {{end}}
+    {{if .Removed}}
+    <p class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">Puan kaldırıldı, o gün tekrar boş.</p>
+    {{end}}
+
     <section class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold sm:text-3xl">{{.AverageScore}}</span>
@@ -61,9 +68,9 @@
                                 {{if .HasEntry}}
                                 {{if .Clickable}}
                                 <a href="/mood?date={{.DateParam}}" class="cal-cell"
-                                    style="background-color:{{.Background}};color:{{.TextColor}}">{{.ScoreText}}</a>
+                                    style="background-color:{{.Background}}">{{.ScoreText}}</a>
                                 {{else}}
-                                <div class="cal-cell" style="background-color:{{.Background}};color:{{.TextColor}}">{{.ScoreText}}</div>
+                                <div class="cal-cell" style="background-color:{{.Background}}">{{.ScoreText}}</div>
                                 {{end}}
                                 {{else}}
                                 {{if .Clickable}}
