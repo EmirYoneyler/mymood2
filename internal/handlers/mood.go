@@ -26,8 +26,9 @@ func NewMoodHandler(moods *repository.MoodRepository, friendships *repository.Fr
 }
 
 type moodForm struct {
-	Score int    `form:"score" validate:"required,min=1,max=10"`
-	Note  string `form:"note" validate:"max=280"`
+	Score     float64 `form:"score" validate:"required,min=1,max=10"`
+	Note      string  `form:"note" validate:"max=280"`
+	EntryDate string  `form:"entry_date"`
 }
 
 func todayDate() time.Time {
@@ -35,18 +36,43 @@ func todayDate() time.Time {
 	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 }
 
+// parseEntryDate parses a "2006-01-02" date string, falling back to today
+// if it's missing, malformed, or in the future (you can't rate a day that
+// hasn't happened yet).
+func parseEntryDate(raw string) time.Time {
+	today := todayDate()
+	if raw == "" {
+		return today
+	}
+
+	parsed, err := time.Parse("2006-01-02", raw)
+	if err != nil {
+		return today
+	}
+
+	parsed = time.Date(parsed.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, time.UTC)
+	if parsed.After(today) {
+		return today
+	}
+	return parsed
+}
+
 func (h *MoodHandler) ShowForm(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
 
-	today, err := h.moods.GetByUserAndDate(c.Context(), userID, todayDate())
+	entryDate := parseEntryDate(c.Query("date"))
+
+	entry, err := h.moods.GetByUserAndDate(c.Context(), userID, entryDate)
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		return fiber.ErrInternalServerError
 	}
 
 	return c.Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
-		"Today":    today,
-		"NoteText": noteText(today),
-		"MoodList": moodScale(),
+		"Today":        entry,
+		"NoteText":     noteText(entry),
+		"SelectedDate": entryDate,
+		"IsToday":      entryDate.Equal(todayDate()),
+		"MaxDate":      todayDate().Format("2006-01-02"),
 	}), "layouts/base")
 }
 
@@ -55,17 +81,13 @@ func (h *MoodHandler) Submit(c *fiber.Ctx) error {
 
 	var form moodForm
 	if err := c.BodyParser(&form); err != nil {
-		return c.Status(fiber.StatusBadRequest).Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
-			"Error":    "Geçersiz form verisi.",
-			"MoodList": moodScale(),
-		}), "layouts/base")
+		return h.renderError(c, userID, "Geçersiz form verisi.", todayDate())
 	}
 
+	entryDate := parseEntryDate(form.EntryDate)
+
 	if err := h.validate.Struct(form); err != nil {
-		return c.Status(fiber.StatusBadRequest).Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
-			"Error":    "Puan 1-10 arasında olmalı, not en fazla 280 karakter olabilir.",
-			"MoodList": moodScale(),
-		}), "layouts/base")
+		return h.renderError(c, userID, "Puan 1.0-10.0 arasında olmalı, not en fazla 280 karakter olabilir.", entryDate)
 	}
 
 	var note *string
@@ -73,19 +95,27 @@ func (h *MoodHandler) Submit(c *fiber.Ctx) error {
 		note = &form.Note
 	}
 
-	entry, err := h.moods.Upsert(c.Context(), userID, form.Score, models.MoodEmoji(form.Score), note, todayDate())
+	entry, err := h.moods.Upsert(c.Context(), userID, form.Score, models.MoodEmoji(form.Score), note, entryDate)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
-			"Error":    "Mood kaydedilemedi, lütfen tekrar dene.",
-			"MoodList": moodScale(),
-		}), "layouts/base")
+		return h.renderError(c, userID, "Mood kaydedilemedi, lütfen tekrar dene.", entryDate)
 	}
 
 	return c.Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
-		"Today":    entry,
-		"NoteText": noteText(entry),
-		"Saved":    true,
-		"MoodList": moodScale(),
+		"Today":        entry,
+		"NoteText":     noteText(entry),
+		"SelectedDate": entryDate,
+		"IsToday":      entryDate.Equal(todayDate()),
+		"MaxDate":      todayDate().Format("2006-01-02"),
+		"Saved":        true,
+	}), "layouts/base")
+}
+
+func (h *MoodHandler) renderError(c *fiber.Ctx, userID, message string, entryDate time.Time) error {
+	return c.Status(fiber.StatusBadRequest).Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
+		"Error":        message,
+		"SelectedDate": entryDate,
+		"IsToday":      entryDate.Equal(todayDate()),
+		"MaxDate":      todayDate().Format("2006-01-02"),
 	}), "layouts/base")
 }
 
@@ -94,17 +124,4 @@ func noteText(entry *models.MoodEntry) string {
 		return ""
 	}
 	return *entry.Note
-}
-
-type moodOption struct {
-	Score int
-	Emoji string
-}
-
-func moodScale() []moodOption {
-	options := make([]moodOption, 0, 10)
-	for score := 1; score <= 10; score++ {
-		options = append(options, moodOption{Score: score, Emoji: models.MoodEmoji(score)})
-	}
-	return options
 }

@@ -20,7 +20,7 @@ func NewMoodRepository(db *pgxpool.Pool) *MoodRepository {
 }
 
 // Upsert creates or updates the mood entry for the given user and date.
-func (r *MoodRepository) Upsert(ctx context.Context, userID string, score int, emoji string, note *string, entryDate time.Time) (*models.MoodEntry, error) {
+func (r *MoodRepository) Upsert(ctx context.Context, userID string, score float64, emoji string, note *string, entryDate time.Time) (*models.MoodEntry, error) {
 	const query = `
 		INSERT INTO mood_entries (user_id, mood_score, mood_emoji, note, entry_date)
 		VALUES ($1, $2, $3, $4, $5)
@@ -129,6 +129,20 @@ func (r *MoodRepository) Stats(ctx context.Context, userID string) (average floa
 
 	if err := r.db.QueryRow(ctx, query, userID).Scan(&average, &count); err != nil {
 		return 0, 0, fmt.Errorf("computing mood stats: %w", err)
+	}
+	return average, count, nil
+}
+
+// StatsBetween returns the average mood score and entry count for a user within
+// an inclusive date range. Used for weekly/monthly/yearly breakdowns.
+func (r *MoodRepository) StatsBetween(ctx context.Context, userID string, start, end time.Time) (average float64, count int, err error) {
+	const query = `
+		SELECT coalesce(avg(mood_score), 0), count(*)
+		FROM mood_entries
+		WHERE user_id = $1 AND entry_date BETWEEN $2 AND $3`
+
+	if err := r.db.QueryRow(ctx, query, userID, start, end).Scan(&average, &count); err != nil {
+		return 0, 0, fmt.Errorf("computing mood stats between: %w", err)
 	}
 	return average, count, nil
 }

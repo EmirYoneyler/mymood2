@@ -1,6 +1,18 @@
 <main>
-    <h1 class="mb-1 text-2xl font-extrabold">Bugün nasılsın?</h1>
-    <p class="mb-6 text-sm text-slate-400">Puanını seç, istersen kısa bir not bırak.</p>
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <h1 class="text-2xl font-extrabold">
+                {{if .IsToday}}Bugün nasılsın?{{else}}{{.SelectedDate.Format "02 Jan 2006"}} nasıldı?{{end}}
+            </h1>
+            <p class="mt-1 text-sm text-slate-400">Puanını seç (ondalıklı olabilir, örn. 7.6), istersen kısa bir not bırak.</p>
+        </div>
+        <form method="GET" action="/mood">
+            <label class="mb-1 block text-xs font-medium text-slate-400">Geçmiş bir günü puanla</label>
+            <input type="date" name="date" max="{{.MaxDate}}" value="{{.SelectedDate.Format "2006-01-02"}}"
+                onchange="this.form.submit()"
+                class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
+        </form>
+    </div>
 
     {{if .Saved}}
     <p class="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Mood'un kaydedildi!</p>
@@ -10,15 +22,21 @@
     {{end}}
 
     <form method="POST" action="/mood" class="glass-card p-6 sm:p-8">
-        <div class="grid grid-cols-5 gap-2 sm:grid-cols-10">
-            {{range .MoodList}}
-            <label class="mood-option group flex cursor-pointer flex-col items-center gap-1 rounded-xl border border-white/10 bg-white/5 py-3 transition hover:bg-white/10">
-                <input type="radio" name="score" value="{{.Score}}" class="peer sr-only"
-                    {{if and $.Today (eq $.Today.Score .Score)}}checked{{end}} required>
-                <span class="text-2xl transition-transform duration-150 group-hover:scale-125 peer-checked:scale-125 peer-active:scale-95">{{.Emoji}}</span>
-                <span class="text-xs font-semibold text-slate-400 peer-checked:text-fuchsia-300">{{.Score}}</span>
-            </label>
-            {{end}}
+        <input type="hidden" name="entry_date" value="{{.SelectedDate.Format "2006-01-02"}}">
+
+        <div class="flex flex-col items-center gap-4">
+            <span id="scoreEmoji" class="text-6xl transition-transform duration-150">{{if .Today}}{{.Today.Emoji}}{{else}}😐{{end}}</span>
+
+            <input type="range" id="scoreRange" min="1" max="10" step="0.1"
+                value="{{if .Today}}{{.Today.Score}}{{else}}5{{end}}"
+                class="w-full accent-fuchsia-500">
+
+            <div class="flex items-center gap-2">
+                <input type="number" name="score" id="scoreInput" min="1" max="10" step="0.1" required
+                    value="{{if .Today}}{{.Today.ScoreText}}{{else}}5.0{{end}}"
+                    class="w-24 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-lg font-bold outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
+                <span class="text-sm text-slate-400">/ 10</span>
+            </div>
         </div>
 
         <label class="mb-1 mt-6 block text-sm font-medium text-slate-300">Not (opsiyonel)</label>
@@ -31,4 +49,30 @@
             Kaydet
         </button>
     </form>
+
+    <script>
+        (function () {
+            var EMOJIS = ["😭", "😭", "😢", "😞", "😕", "😐", "🙂", "😊", "😄", "😁", "🤩"];
+            var range = document.getElementById('scoreRange');
+            var input = document.getElementById('scoreInput');
+            var emoji = document.getElementById('scoreEmoji');
+
+            function emojiFor(value) {
+                var idx = Math.min(10, Math.max(1, Math.round(parseFloat(value) || 1)));
+                return EMOJIS[idx];
+            }
+
+            function sync(value, source) {
+                var clamped = Math.min(10, Math.max(1, parseFloat(value) || 1));
+                if (source !== 'range') range.value = clamped;
+                if (source !== 'input') input.value = clamped.toFixed(1);
+                emoji.textContent = emojiFor(clamped);
+                emoji.classList.add('scale-125');
+                setTimeout(function () { emoji.classList.remove('scale-125'); }, 150);
+            }
+
+            range.addEventListener('input', function () { sync(range.value, 'range'); });
+            input.addEventListener('input', function () { sync(input.value, 'input'); });
+        })();
+    </script>
 </main>
