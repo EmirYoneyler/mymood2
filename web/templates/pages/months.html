@@ -1,13 +1,13 @@
 <main class="space-y-6">
     <div class="flex items-center gap-3">
-        <a href="/profile" class="text-sm text-fuchsia-400 hover:text-fuchsia-300">← Profilime dön</a>
+        <a href="{{.ProfileLink}}" class="text-sm text-fuchsia-400 hover:text-fuchsia-300">← {{if .Username}}@{{.Username}} profiline{{else}}Profilime{{end}} dön</a>
     </div>
-    <h1 class="text-2xl font-extrabold">Aylık Ortalamalar</h1>
+    <h1 class="text-2xl font-extrabold">{{if .Username}}@{{.Username}} - {{end}}Aylık Ortalamalar</h1>
 
     {{if .Months}}
     <section class="glass-card divide-y divide-white/10 p-2">
         {{range .Months}}
-        <a href="/profile?year={{.Year}}" class="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-white/5">
+        <a href="{{$.ProfileLink}}?year={{.Year}}" class="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-white/5">
             <span class="font-medium">{{.Label}} {{.Year}}</span>
             <span class="flex items-center gap-3 text-sm">
                 <span class="text-slate-500">{{.Count}} gün</span>
@@ -18,7 +18,9 @@
     </section>
     {{else}}
     <div class="glass-card p-8 text-center text-slate-300">
+        {{if .Username}}@{{.Username}} henüz hiç mood girişi yapmamış.{{else}}
         Henüz hiç mood girişin yok. <a href="/mood" class="font-medium text-fuchsia-400 hover:text-fuchsia-300">Bugünü puanla</a> ve burada görünsün.
+        {{end}}
     </div>
     {{end}}
 </main>

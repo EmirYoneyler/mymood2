@@ -1,10 +1,12 @@
 <main class="space-y-6">
     <div class="flex items-center gap-3">
-        <a href="/profile" class="text-sm text-fuchsia-400 hover:text-fuchsia-300">← Profilime dön</a>
+        <a href="{{.ProfileLink}}" class="text-sm text-fuchsia-400 hover:text-fuchsia-300">← {{if .Username}}@{{.Username}} profiline{{else}}Profilime{{end}} dön</a>
     </div>
     <div>
-        <h1 class="text-2xl font-extrabold">Yıllık Notlar</h1>
+        <h1 class="text-2xl font-extrabold">{{if .Username}}@{{.Username}} - {{end}}Yıllık Notlar</h1>
+        {{if .Editable}}
         <p class="mt-1 text-sm text-slate-400">Geçmiş bir yılı günlük girişlerden bağımsız, bütünsel olarak puanla (örn. "2024 harika bir yıldı, 8 veririm"). Bu yıl her zaman güncel girdilerinin ortalamasıdır.</p>
+        {{end}}
     </div>
 
     {{if .Saved}}
@@ -17,11 +19,11 @@
     <section class="glass-card divide-y divide-white/10 p-2">
         {{range .Years}}
         <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <a href="/profile?year={{.Year}}" class="font-medium hover:text-fuchsia-300">{{.Year}}{{if .IsCurrent}} <span class="text-xs text-slate-500">(bu yıl, otomatik)</span>{{end}}</a>
+            <a href="{{$.ProfileLink}}?year={{.Year}}" class="font-medium hover:text-fuchsia-300">{{.Year}}{{if .IsCurrent}} <span class="text-xs text-slate-500">(bu yıl, otomatik)</span>{{end}}</a>
 
             {{if .IsCurrent}}
             <span class="font-bold text-fuchsia-300">{{.ScoreText}}</span>
-            {{else}}
+            {{else if $.Editable}}
             <div class="flex items-center gap-2">
                 <span class="font-bold {{if .HasRating}}text-cyan-300{{else}}text-slate-500{{end}}">{{.ScoreText}}</span>
                 <form method="POST" action="/profile/year-rating" class="flex items-center gap-2">
@@ -39,6 +41,8 @@
                 </form>
                 {{end}}
             </div>
+            {{else}}
+            <span class="font-bold {{if .HasRating}}text-cyan-300{{else}}text-slate-500{{end}}">{{.ScoreText}}</span>
             {{end}}
         </div>
         {{end}}

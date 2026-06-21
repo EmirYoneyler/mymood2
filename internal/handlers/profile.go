@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -45,24 +44,13 @@ func (h *ProfileHandler) ShowFriend(c *fiber.Ctx) error {
 	viewerID, _ := middleware.UserIDFromContext(c)
 	username := c.Params("username")
 
-	target, err := h.users.GetByUsername(c.Context(), username)
-	if errors.Is(err, repository.ErrNotFound) {
-		return fiber.ErrNotFound
-	}
+	target, err := resolveFriendTarget(c, h.users, h.friendships, viewerID, username)
 	if err != nil {
-		return fiber.ErrInternalServerError
+		return err
 	}
 
 	if target.ID == viewerID {
 		return c.Redirect("/profile")
-	}
-
-	friendship, err := h.friendships.GetBetween(c.Context(), viewerID, target.ID)
-	if errors.Is(err, repository.ErrNotFound) || (err == nil && friendship.Status != models.FriendshipAccepted) {
-		return c.Status(fiber.StatusForbidden).SendString("Bu profili görmek için arkadaş olmanız gerekiyor.")
-	}
-	if err != nil && !errors.Is(err, repository.ErrNotFound) {
-		return fiber.ErrInternalServerError
 	}
 
 	return h.renderProfile(c, viewerID, target.ID, target.Username, false, fiber.Map{})
@@ -126,9 +114,16 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		trackingRate = int(float64(viewYearCount) / float64(daysElapsedInViewYear) * 100)
 	}
 
+	profilePrefix := "/profile"
+	if username != "" {
+		profilePrefix = "/profile/" + username
+	}
+
 	data := fiber.Map{
 		"Editable":        editable,
 		"Username":        username,
+		"MonthsLink":      profilePrefix + "/months",
+		"YearsLink":       profilePrefix + "/years",
 		"AverageScore":    formatAverage(average, count),
 		"TotalEntries":    count,
 		"CurrentStreak":   currentStreak(dates, lastActivity, hasActivity, today),

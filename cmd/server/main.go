@@ -80,8 +80,8 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	profileHandler := handlers.NewProfileHandler(moodRepo, friendshipRepo, userRepo)
 	settingsHandler := handlers.NewSettingsHandler(userRepo, friendshipRepo, cfg.IsProduction())
 	yearRatingHandler := handlers.NewYearRatingHandler(yearRatingRepo)
-	monthsHandler := handlers.NewMonthsHandler(moodRepo, friendshipRepo)
-	yearsHandler := handlers.NewYearsHandler(moodRepo, yearRatingRepo, friendshipRepo)
+	monthsHandler := handlers.NewMonthsHandler(moodRepo, friendshipRepo, userRepo)
+	yearsHandler := handlers.NewYearsHandler(moodRepo, yearRatingRepo, friendshipRepo, userRepo)
 
 	authLimiter := limiter.New(limiter.Config{
 		Max:        10,
@@ -126,6 +126,8 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	app.Post("/profile/year-rating", requireAuth, yearRatingHandler.Submit)
 	app.Post("/profile/year-rating/delete", requireAuth, yearRatingHandler.Delete)
 	app.Get("/profile/:username", requireAuth, profileHandler.ShowFriend)
+	app.Get("/profile/:username/months", requireAuth, monthsHandler.ShowFriend)
+	app.Get("/profile/:username/years", requireAuth, yearsHandler.ShowFriend)
 
 	app.Get("/settings", requireAuth, settingsHandler.Show)
 	app.Post("/settings/delete", requireAuth, settingsHandler.DeleteAccount)

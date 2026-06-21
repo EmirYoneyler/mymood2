@@ -9,10 +9,11 @@ import (
 type MonthsHandler struct {
 	moods       *repository.MoodRepository
 	friendships *repository.FriendshipRepository
+	users       *repository.UserRepository
 }
 
-func NewMonthsHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository) *MonthsHandler {
-	return &MonthsHandler{moods: moods, friendships: friendships}
+func NewMonthsHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository, users *repository.UserRepository) *MonthsHandler {
+	return &MonthsHandler{moods: moods, friendships: friendships, users: users}
 }
 
 var turkishMonthNames = []string{
@@ -27,12 +28,29 @@ type monthRow struct {
 	Count       int
 }
 
-// Show lists every calendar month the user has logged a mood in, newest first,
-// each linking back to that year's calendar on the profile page.
+// Show lists every calendar month the logged-in user has logged a mood in.
 func (h *MonthsHandler) Show(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
+	return h.render(c, userID, userID, "")
+}
 
-	summaries, err := h.moods.MonthlyBreakdown(c.Context(), userID)
+// ShowFriend lists another user's monthly breakdown, restricted to accepted friends.
+func (h *MonthsHandler) ShowFriend(c *fiber.Ctx) error {
+	viewerID, _ := middleware.UserIDFromContext(c)
+	username := c.Params("username")
+
+	target, err := resolveFriendTarget(c, h.users, h.friendships, viewerID, username)
+	if err != nil {
+		return err
+	}
+
+	return h.render(c, viewerID, target.ID, target.Username)
+}
+
+// render lists every calendar month targetID has logged a mood in, newest
+// first, each linking back to that year's calendar on the profile page.
+func (h *MonthsHandler) render(c *fiber.Ctx, viewerID, targetID, username string) error {
+	summaries, err := h.moods.MonthlyBreakdown(c.Context(), targetID)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
@@ -47,7 +65,14 @@ func (h *MonthsHandler) Show(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Render("pages/months", withNav(c.Context(), h.friendships, userID, fiber.Map{
-		"Months": rows,
+	profileLink := "/profile"
+	if username != "" {
+		profileLink = "/profile/" + username
+	}
+
+	return c.Render("pages/months", withNav(c.Context(), h.friendships, viewerID, fiber.Map{
+		"Months":      rows,
+		"Username":    username,
+		"ProfileLink": profileLink,
 	}), "layouts/base")
 }

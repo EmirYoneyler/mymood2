@@ -10,10 +10,11 @@ type YearsHandler struct {
 	moods       *repository.MoodRepository
 	yearRatings *repository.YearRatingRepository
 	friendships *repository.FriendshipRepository
+	users       *repository.UserRepository
 }
 
-func NewYearsHandler(moods *repository.MoodRepository, yearRatings *repository.YearRatingRepository, friendships *repository.FriendshipRepository) *YearsHandler {
-	return &YearsHandler{moods: moods, yearRatings: yearRatings, friendships: friendships}
+func NewYearsHandler(moods *repository.MoodRepository, yearRatings *repository.YearRatingRepository, friendships *repository.FriendshipRepository, users *repository.UserRepository) *YearsHandler {
+	return &YearsHandler{moods: moods, yearRatings: yearRatings, friendships: friendships, users: users}
 }
 
 // defaultYearsBack is how far back the years list goes by default. It's
@@ -29,17 +30,36 @@ type yearRow struct {
 	NoteText  string
 }
 
-// Show lists every year from the current one back through a reasonable
-// history, current year showing the live daily average (read-only), and past
-// years showing/accepting a single holistic rating you enter directly -
-// useful for years you never logged day-by-day but still remember well.
+// Show lists the logged-in user's years.
 func (h *YearsHandler) Show(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
+	return h.render(c, userID, userID, "", true)
+}
+
+// ShowFriend lists another user's years, read-only, restricted to accepted friends.
+func (h *YearsHandler) ShowFriend(c *fiber.Ctx) error {
+	viewerID, _ := middleware.UserIDFromContext(c)
+	username := c.Params("username")
+
+	target, err := resolveFriendTarget(c, h.users, h.friendships, viewerID, username)
+	if err != nil {
+		return err
+	}
+
+	return h.render(c, viewerID, target.ID, target.Username, false)
+}
+
+// render lists every year from the current one back through a reasonable
+// history, current year showing the live daily average (read-only), and past
+// years showing/accepting a single holistic rating entered directly - useful
+// for years never logged day-by-day but still remembered well. Editing is
+// only available when viewing your own years.
+func (h *YearsHandler) render(c *fiber.Ctx, viewerID, targetID, username string, editable bool) error {
 	ctx := c.Context()
 	today := todayDate()
 	currentYear := today.Year()
 
-	ratings, err := h.yearRatings.ListByUser(ctx, userID)
+	ratings, err := h.yearRatings.ListByUser(ctx, targetID)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
@@ -55,7 +75,7 @@ func (h *YearsHandler) Show(c *fiber.Ctx) error {
 		}
 	}
 
-	avg, count, err := h.moods.StatsBetween(ctx, userID, startOfYear(today), today)
+	avg, count, err := h.moods.StatsBetween(ctx, targetID, startOfYear(today), today)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
@@ -77,9 +97,17 @@ func (h *YearsHandler) Show(c *fiber.Ctx) error {
 		rows = append(rows, row)
 	}
 
-	return c.Render("pages/years", withNav(ctx, h.friendships, userID, fiber.Map{
-		"Years":   rows,
-		"Saved":   c.Query("saved") == "1",
-		"Removed": c.Query("removed") == "1",
+	profileLink := "/profile"
+	if username != "" {
+		profileLink = "/profile/" + username
+	}
+
+	return c.Render("pages/years", withNav(ctx, h.friendships, viewerID, fiber.Map{
+		"Years":       rows,
+		"Editable":    editable,
+		"Username":    username,
+		"ProfileLink": profileLink,
+		"Saved":       c.Query("saved") == "1",
+		"Removed":     c.Query("removed") == "1",
 	}), "layouts/base")
 }
