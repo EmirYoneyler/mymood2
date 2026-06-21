@@ -1,14 +1,20 @@
 <main class="space-y-6">
-    <h1 class="text-2xl font-extrabold">Profilim</h1>
+    <h1 class="text-2xl font-extrabold">
+        {{if .Username}}@{{.Username}} Profili{{else}}Profilim{{end}}
+    </h1>
 
-    <section class="grid grid-cols-3 gap-3 sm:gap-4">
+    <section class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold sm:text-3xl">{{.AverageScore}}</span>
             <span class="text-xs text-slate-400 sm:text-sm">Tüm Zamanlar Ortalaması</span>
         </div>
         <div class="glass-card p-4 text-center sm:p-6">
+            <span class="block text-2xl font-extrabold text-cyan-300 sm:text-3xl">{{.CurrentStreak}}</span>
+            <span class="text-xs text-slate-400 sm:text-sm">Güncel Streak</span>
+        </div>
+        <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold sm:text-3xl">{{.LongestStreak}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">En Uzun Streak</span>
+            <span class="text-xs text-slate-400 sm:text-sm">Rekor Streak</span>
         </div>
         <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold sm:text-3xl">{{.TotalEntries}}</span>
@@ -31,27 +37,82 @@
         </div>
     </section>
 
-    <section class="glass-card p-6">
-        <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-lg font-bold">Mood Geçmişi</h2>
-            <p class="text-xs text-slate-500">Bir günü tıklayarak puanını güncelleyebilirsin</p>
-        </div>
-        <div class="heatmap-grid">
-            {{range .Weeks}}
-            <div class="heatmap-week">
-                {{range .}}
-                {{if .Future}}
-                <div class="heatmap-cell future"></div>
-                {{else}}
-                <a
-                    href="/mood?date={{.Date.Format "2006-01-02"}}"
-                    class="heatmap-cell level-{{if .HasEntry}}{{.Level}}{{else}}0{{end}} block transition hover:ring-2 hover:ring-fuchsia-400/60"
-                    title="{{.Date.Format "02 Jan 2006"}}{{if .HasEntry}} - {{.ScoreText}}/10{{end}}"
-                ></a>
-                {{end}}
-                {{end}}
+    <section class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+        <div class="glass-card p-6">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-lg font-bold">{{.Calendar.Year}} Takvimi</h2>
+                {{if .Editable}}<p class="text-xs text-slate-500">Bir günü tıklayarak puan ekle/güncelle</p>{{end}}
             </div>
-            {{end}}
+            <div class="calendar-scroll">
+                <table class="calendar-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            {{range .Calendar.MonthNames}}<th>{{.}}</th>{{end}}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Calendar.Rows}}
+                        <tr>
+                            <td class="day-label">{{.Day}}</td>
+                            {{range .Cells}}
+                            <td>
+                                {{if .Valid}}
+                                {{if .Clickable}}
+                                <a href="/mood?date={{.DateParam}}"
+                                    class="cal-cell {{if .HasEntry}}cal-{{.Bucket}}{{else}}cal-empty{{end}}">{{.ScoreText}}</a>
+                                {{else}}
+                                <div class="cal-cell {{if .HasEntry}}cal-{{.Bucket}}{{else}}cal-empty{{end}}">{{.ScoreText}}</div>
+                                {{end}}
+                                {{end}}
+                            </td>
+                            {{end}}
+                        </tr>
+                        {{end}}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td class="day-label">Ø</td>
+                            {{range .Calendar.MonthAverages}}<td class="month-avg text-center">{{.}}</td>{{end}}
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div class="glass-card p-5">
+                <h3 class="mb-3 text-sm font-bold text-slate-300">Dağılım</h3>
+                <ul class="space-y-2">
+                    {{range .Distribution}}
+                    <li class="flex items-center justify-between text-sm">
+                        <span><span class="legend-swatch cal-{{.Class}}"></span>{{.Label}}</span>
+                        <span class="text-slate-400">{{.Count}} · %{{.Pct}}</span>
+                    </li>
+                    {{end}}
+                </ul>
+            </div>
+
+            <div class="glass-card p-5">
+                <h3 class="mb-3 text-sm font-bold text-slate-300">Özet</h3>
+                <ul class="space-y-2 text-sm">
+                    <li class="flex items-center justify-between"><span class="text-slate-400">Yıl Ortalaması</span><span class="font-semibold">{{.YearAverage}}</span></li>
+                    <li class="flex items-center justify-between"><span class="text-slate-400">Takip Edilen Gün</span><span class="font-semibold">{{.YearDaysTracked}}</span></li>
+                    <li class="flex items-center justify-between"><span class="text-slate-400">Takip Oranı</span><span class="font-semibold">%{{.TrackingRate}}</span></li>
+                </ul>
+            </div>
+
+            <div class="glass-card p-5">
+                <h3 class="mb-3 text-sm font-bold text-slate-300">Lejant</h3>
+                <ul class="space-y-1.5 text-xs text-slate-400">
+                    <li><span class="legend-swatch cal-excellent"></span>9-10 Mükemmel</li>
+                    <li><span class="legend-swatch cal-great"></span>7-8.9 Harika</li>
+                    <li><span class="legend-swatch cal-good"></span>5-6.9 İyi</li>
+                    <li><span class="legend-swatch cal-low"></span>3-4.9 Düşük</li>
+                    <li><span class="legend-swatch cal-poor"></span>1-2.9 Kötü</li>
+                    <li><span class="legend-swatch cal-empty"></span>Boş</li>
+                </ul>
+            </div>
         </div>
     </section>
 </main>

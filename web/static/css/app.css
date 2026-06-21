@@ -54,34 +54,66 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* heatmap */
-.heatmap-grid {
-    display: flex;
-    gap: 3px;
+/* year calendar */
+.calendar-scroll {
     overflow-x: auto;
     padding-bottom: 0.5rem;
 }
 
-.heatmap-week {
+.calendar-table {
+    border-collapse: separate;
+    border-spacing: 3px;
+    font-size: 0.7rem;
+}
+
+.calendar-table th {
+    color: rgba(226, 232, 240, 0.6);
+    font-weight: 600;
+    padding-bottom: 4px;
+}
+
+.calendar-table .day-label {
+    color: rgba(148, 163, 184, 0.7);
+    text-align: right;
+    padding-right: 6px;
+    font-variant-numeric: tabular-nums;
+}
+
+.cal-cell {
     display: flex;
-    flex-direction: column;
-    gap: 3px;
+    width: 34px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.92);
+    transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.heatmap-cell {
-    width: 11px;
-    height: 11px;
-    border-radius: 3px;
-    background-color: rgba(255, 255, 255, 0.06);
+a.cal-cell:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
 }
 
-.heatmap-cell.future {
-    background-color: transparent;
+.cal-empty { background-color: rgba(255, 255, 255, 0.05); }
+.cal-poor { background-color: #7f1d1d; }
+.cal-low { background-color: #c2410c; }
+.cal-good { background-color: #b45309; }
+.cal-great { background-color: #15803d; }
+.cal-excellent { background-color: #0891b2; }
+
+.calendar-table .month-avg {
+    color: rgba(226, 232, 240, 0.7);
+    font-weight: 600;
 }
 
-.heatmap-cell.level-0 { background-color: rgba(255, 255, 255, 0.06); }
-.heatmap-cell.level-1, .heatmap-cell.level-2 { background-color: #4c1d95; }
-.heatmap-cell.level-3, .heatmap-cell.level-4 { background-color: #6d28d9; }
-.heatmap-cell.level-5, .heatmap-cell.level-6 { background-color: #9333ea; }
-.heatmap-cell.level-7, .heatmap-cell.level-8 { background-color: #c026d3; }
-.heatmap-cell.level-9, .heatmap-cell.level-10 { background-color: #ec4899; }
+.legend-swatch {
+    display: inline-block;
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 4px;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+}

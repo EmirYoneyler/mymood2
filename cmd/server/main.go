@@ -64,7 +64,7 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	moodHandler := handlers.NewMoodHandler(moodRepo, friendshipRepo)
 	friendHandler := handlers.NewFriendHandler(userRepo, friendshipRepo)
 	feedHandler := handlers.NewFeedHandler(moodRepo, friendshipRepo)
-	profileHandler := handlers.NewProfileHandler(moodRepo, friendshipRepo)
+	profileHandler := handlers.NewProfileHandler(moodRepo, friendshipRepo, userRepo)
 
 	authLimiter := limiter.New(limiter.Config{
 		Max:        10,
@@ -94,4 +94,5 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 
 	app.Get("/feed", requireAuth, feedHandler.Show)
 	app.Get("/profile", requireAuth, profileHandler.Show)
+	app.Get("/profile/:username", requireAuth, profileHandler.ShowFriend)
 }

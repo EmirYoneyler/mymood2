@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/emiryoneyler/mymood/internal/middleware"
@@ -14,73 +14,111 @@ import (
 type ProfileHandler struct {
 	moods       *repository.MoodRepository
 	friendships *repository.FriendshipRepository
+	users       *repository.UserRepository
 }
 
-func NewProfileHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository) *ProfileHandler {
-	return &ProfileHandler{moods: moods, friendships: friendships}
+func NewProfileHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository, users *repository.UserRepository) *ProfileHandler {
+	return &ProfileHandler{moods: moods, friendships: friendships, users: users}
 }
 
-const heatmapWeeks = 53
+// inactivityLimit is how long a user can go without logging a mood before
+// their current streak resets to zero.
+const inactivityLimit = 36 * time.Hour
 
-type heatmapCell struct {
-	Date     time.Time
-	Score    float64
-	Level    int
-	HasEntry bool
-	Future   bool
-}
-
-// ScoreText formats the cell's score with a single decimal place, e.g. "7.6".
-func (c heatmapCell) ScoreText() string {
-	return fmt.Sprintf("%.1f", c.Score)
-}
-
+// Show renders the logged-in user's own profile.
 func (h *ProfileHandler) Show(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
+	return h.renderProfile(c, userID, userID, "", true)
+}
+
+// ShowFriend renders another user's profile, restricted to accepted friends.
+func (h *ProfileHandler) ShowFriend(c *fiber.Ctx) error {
+	viewerID, _ := middleware.UserIDFromContext(c)
+	username := c.Params("username")
+
+	target, err := h.users.GetByUsername(c.Context(), username)
+	if errors.Is(err, repository.ErrNotFound) {
+		return fiber.ErrNotFound
+	}
+	if err != nil {
+		return fiber.ErrInternalServerError
+	}
+
+	if target.ID == viewerID {
+		return c.Redirect("/profile")
+	}
+
+	friendship, err := h.friendships.GetBetween(c.Context(), viewerID, target.ID)
+	if errors.Is(err, repository.ErrNotFound) || (err == nil && friendship.Status != models.FriendshipAccepted) {
+		return c.Status(fiber.StatusForbidden).SendString("Bu profili görmek için arkadaş olmanız gerekiyor.")
+	}
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		return fiber.ErrInternalServerError
+	}
+
+	return h.renderProfile(c, viewerID, target.ID, target.Username, false)
+}
+
+func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, username string, editable bool) error {
 	ctx := c.Context()
 	today := todayDate()
 
-	average, count, err := h.moods.Stats(ctx, userID)
+	average, count, err := h.moods.Stats(ctx, targetID)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
 
-	weekAvg, weekCount, err := h.moods.StatsBetween(ctx, userID, startOfWeek(today), today)
+	weekAvg, weekCount, err := h.moods.StatsBetween(ctx, targetID, startOfWeek(today), today)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
 
-	monthAvg, monthCount, err := h.moods.StatsBetween(ctx, userID, startOfMonth(today), today)
+	monthAvg, monthCount, err := h.moods.StatsBetween(ctx, targetID, startOfMonth(today), today)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
 
-	yearAvg, yearCount, err := h.moods.StatsBetween(ctx, userID, startOfYear(today), today)
+	yearStart := startOfYear(today)
+	yearAvg, yearCount, err := h.moods.StatsBetween(ctx, targetID, yearStart, today)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
 
-	dates, err := h.moods.ListEntryDates(ctx, userID)
+	dates, err := h.moods.ListEntryDates(ctx, targetID)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
 
-	rangeStart := today.AddDate(0, 0, -(heatmapWeeks*7 - 1))
-	rangeStart = rangeStart.AddDate(0, 0, -int(rangeStart.Weekday()))
-
-	entries, err := h.moods.ListByUserSince(ctx, userID, rangeStart)
+	lastActivity, hasActivity, err := h.moods.LastActivityAt(ctx, targetID)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
 
-	return c.Render("pages/profile", withNav(ctx, h.friendships, userID, fiber.Map{
-		"AverageScore":  fmt.Sprintf("%.1f", average),
-		"TotalEntries":  count,
-		"LongestStreak": longestStreak(dates),
-		"WeekAverage":   formatAverage(weekAvg, weekCount),
-		"MonthAverage":  formatAverage(monthAvg, monthCount),
-		"YearAverage":   formatAverage(yearAvg, yearCount),
-		"Weeks":         buildHeatmap(rangeStart, today, entries),
+	yearEntries, err := h.moods.ListByUserSince(ctx, targetID, yearStart)
+	if err != nil {
+		return fiber.ErrInternalServerError
+	}
+
+	daysElapsedInYear := int(today.Sub(yearStart).Hours()/24) + 1
+	trackingRate := 0
+	if daysElapsedInYear > 0 {
+		trackingRate = int(float64(yearCount) / float64(daysElapsedInYear) * 100)
+	}
+
+	return c.Render("pages/profile", withNav(ctx, h.friendships, viewerID, fiber.Map{
+		"Editable":        editable,
+		"Username":        username,
+		"AverageScore":    fmt.Sprintf("%.1f", average),
+		"TotalEntries":    count,
+		"CurrentStreak":   currentStreak(dates, lastActivity, hasActivity, today),
+		"LongestStreak":   longestStreak(dates),
+		"WeekAverage":     formatAverage(weekAvg, weekCount),
+		"MonthAverage":    formatAverage(monthAvg, monthCount),
+		"YearAverage":     formatAverage(yearAvg, yearCount),
+		"Calendar":        buildYearCalendar(today.Year(), today, yearEntries, editable),
+		"Distribution":    buildDistribution(yearEntries),
+		"YearDaysTracked": yearCount,
+		"TrackingRate":    trackingRate,
 	}), "layouts/base")
 }
 
@@ -104,6 +142,7 @@ func startOfYear(t time.Time) time.Time {
 	return time.Date(t.Year(), time.January, 1, 0, 0, 0, 0, time.UTC)
 }
 
+// longestStreak returns the longest run of consecutive logged days, ever.
 func longestStreak(dates []time.Time) int {
 	if len(dates) == 0 {
 		return 0
@@ -123,44 +162,153 @@ func longestStreak(dates []time.Time) int {
 	return longest
 }
 
-func buildHeatmap(start, today time.Time, entries []models.MoodEntry) [][]heatmapCell {
+// currentStreak returns the run of consecutive logged days ending at the most
+// recent entry, but resets to zero if the user hasn't logged anything in the
+// last 36 hours (inactivityLimit) - so the streak actually requires showing
+// up, not just having logged in a row at some point in the past.
+func currentStreak(dates []time.Time, lastActivity time.Time, hasActivity bool, now time.Time) int {
+	if !hasActivity || len(dates) == 0 {
+		return 0
+	}
+
+	if now.Sub(lastActivity) > inactivityLimit {
+		return 0
+	}
+
+	streak := 1
+	for i := len(dates) - 1; i > 0; i-- {
+		if dates[i].Sub(dates[i-1]) == 24*time.Hour {
+			streak++
+		} else {
+			break
+		}
+	}
+	return streak
+}
+
+// bucketFor classifies a score into one of five buckets used for calendar
+// coloring and the distribution breakdown.
+func bucketFor(score float64) (label, class string) {
+	switch {
+	case score >= 9:
+		return "Mükemmel", "excellent"
+	case score >= 7:
+		return "Harika", "great"
+	case score >= 5:
+		return "İyi", "good"
+	case score >= 3:
+		return "Düşük", "low"
+	default:
+		return "Kötü", "poor"
+	}
+}
+
+type calendarCell struct {
+	Valid     bool
+	Clickable bool
+	HasEntry  bool
+	ScoreText string
+	Bucket    string
+	DateParam string
+}
+
+type calendarRow struct {
+	Day   int
+	Cells []calendarCell
+}
+
+type yearCalendar struct {
+	Year          int
+	MonthNames    []string
+	Rows          []calendarRow
+	MonthAverages []string
+}
+
+func buildYearCalendar(year int, today time.Time, entries []models.MoodEntry, editable bool) yearCalendar {
 	scoreByDate := make(map[string]float64, len(entries))
 	for _, e := range entries {
 		scoreByDate[e.EntryDate.Format("2006-01-02")] = e.Score
 	}
 
-	totalDays := int(today.Sub(start).Hours()/24) + 1
-	totalCells := ((totalDays + 6) / 7) * 7
+	monthNames := []string{"Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"}
 
-	weeks := make([][]heatmapCell, 0, heatmapWeeks)
-	var week []heatmapCell
+	rows := make([]calendarRow, 31)
+	monthSums := make([]float64, 12)
+	monthCounts := make([]int, 12)
 
-	for i := 0; i < totalCells; i++ {
-		date := start.AddDate(0, 0, i)
-		cell := heatmapCell{Date: date, Future: date.After(today)}
+	for day := 1; day <= 31; day++ {
+		cells := make([]calendarCell, 12)
+		for month := 0; month < 12; month++ {
+			daysInMonth := time.Date(year, time.Month(month+2), 0, 0, 0, 0, 0, time.UTC).Day()
+			if day > daysInMonth {
+				cells[month] = calendarCell{Valid: false}
+				continue
+			}
 
-		if score, ok := scoreByDate[date.Format("2006-01-02")]; ok {
-			cell.Score = score
-			cell.Level = clampLevel(int(math.Round(score)))
-			cell.HasEntry = true
+			date := time.Date(year, time.Month(month+1), day, 0, 0, 0, 0, time.UTC)
+			cell := calendarCell{
+				Valid:     true,
+				DateParam: date.Format("2006-01-02"),
+				Clickable: editable && !date.After(today),
+			}
+
+			if score, ok := scoreByDate[cell.DateParam]; ok {
+				cell.HasEntry = true
+				cell.ScoreText = fmt.Sprintf("%.1f", score)
+				_, cell.Bucket = bucketFor(score)
+				monthSums[month] += score
+				monthCounts[month]++
+			}
+
+			cells[month] = cell
 		}
+		rows[day-1] = calendarRow{Day: day, Cells: cells}
+	}
 
-		week = append(week, cell)
-		if len(week) == 7 {
-			weeks = append(weeks, week)
-			week = nil
+	monthAverages := make([]string, 12)
+	for m := 0; m < 12; m++ {
+		if monthCounts[m] == 0 {
+			monthAverages[m] = "—"
+		} else {
+			monthAverages[m] = fmt.Sprintf("%.1f", monthSums[m]/float64(monthCounts[m]))
 		}
 	}
 
-	return weeks
+	return yearCalendar{Year: year, MonthNames: monthNames, Rows: rows, MonthAverages: monthAverages}
 }
 
-func clampLevel(level int) int {
-	if level < 1 {
-		return 1
+type bucketStat struct {
+	Label string
+	Class string
+	Count int
+	Pct   int
+}
+
+func buildDistribution(entries []models.MoodEntry) []bucketStat {
+	order := []string{"excellent", "great", "good", "low", "poor"}
+	labels := map[string]string{
+		"excellent": "Mükemmel",
+		"great":     "Harika",
+		"good":      "İyi",
+		"low":       "Düşük",
+		"poor":      "Kötü",
 	}
-	if level > 10 {
-		return 10
+
+	counts := map[string]int{}
+	for _, e := range entries {
+		_, class := bucketFor(e.Score)
+		counts[class]++
 	}
-	return level
+
+	total := len(entries)
+	stats := make([]bucketStat, 0, len(order))
+	for _, class := range order {
+		pct := 0
+		if total > 0 {
+			pct = int(float64(counts[class]) / float64(total) * 100)
+		}
+		stats = append(stats, bucketStat{Label: labels[class], Class: class, Count: counts[class], Pct: pct})
+	}
+
+	return stats
 }

@@ -33,7 +33,7 @@
                 <span class="text-3xl">{{.Mood.Emoji}}</span>
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center justify-between gap-2">
-                        <strong class="truncate">@{{.User.Username}}</strong>
+                        <a href="/profile/{{.User.Username}}" class="truncate font-bold hover:text-fuchsia-300">@{{.User.Username}}</a>
                         <span class="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-slate-300">{{.Mood.ScoreText}}/10</span>
                     </div>
                     <time class="text-xs text-slate-500">{{.Mood.EntryDate.Format "02 Jan 2006"}}</time>
