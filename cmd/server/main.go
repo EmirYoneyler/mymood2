@@ -38,6 +38,16 @@ func main() {
 
 	app.Use(logger.New())
 	app.Use(helmet.New())
+	app.Use(func(c *fiber.Ctx) error {
+		// helmet always sets this to "require-corp" (its config merging
+		// treats an empty override as "use the default", so it can't be
+		// disabled via Config). require-corp blocks the third-party CDN
+		// scripts this app depends on (Tailwind Play CDN, htmx, Google
+		// Fonts) since they don't send a matching Cross-Origin-Resource-Policy
+		// header, so we strip it after helmet sets it.
+		c.Response().Header.Del("Cross-Origin-Embedder-Policy")
+		return c.Next()
+	})
 	app.Static("/static", "./web/static")
 
 	app.Get("/healthz", func(c *fiber.Ctx) error {
