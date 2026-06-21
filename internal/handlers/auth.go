@@ -51,7 +51,7 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 
 	if err := h.validate.Struct(form); err != nil {
 		return c.Status(fiber.StatusBadRequest).Render("pages/register", fiber.Map{
-			"Error":    "Lütfen tüm alanları doğru şekilde doldur (kullanıcı adı 3-30 karakter, şifre en az 8 karakter).",
+			"Error":    "Lütfen tüm alanları doğru şekilde doldur (kullanıcı adı 3-30 karakter, sadece harf/rakam, boşluksuz; şifre en az 8 karakter).",
 			"Username": form.Username,
 			"Email":    form.Email,
 		}, "layouts/base")

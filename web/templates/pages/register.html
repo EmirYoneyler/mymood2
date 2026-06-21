@@ -11,7 +11,9 @@
             <div>
                 <label class="mb-1 block text-sm font-medium text-slate-300">Kullanıcı Adı</label>
                 <input type="text" name="username" required minlength="3" maxlength="30" value="{{.Username}}"
+                    pattern="[A-Za-z0-9]+" title="Sadece harf ve rakam, boşluk veya özel karakter olmadan"
                     class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
+                <p class="mt-1 text-xs text-slate-500">Sadece harf ve rakam, boşluk olmadan (örn. emiry)</p>
             </div>
             <div>
                 <label class="mb-1 block text-sm font-medium text-slate-300">E-posta</label>
