@@ -37,9 +37,10 @@
         </div>
 
         <label class="mb-1 mt-6 block text-sm font-medium text-slate-300">Not (opsiyonel)</label>
-        <textarea name="note" maxlength="280" placeholder="Günün nasıl geçti?"
+        <textarea name="note" id="noteInput" maxlength="280" placeholder="Günün nasıl geçti?"
             class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30"
             rows="3">{{.NoteText}}</textarea>
+        <p id="noteCount" class="mt-1 text-right text-xs text-slate-500">0/280</p>
 
         <button type="submit"
             class="mt-4 rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-[0.98]">
@@ -63,6 +64,14 @@
             var range = document.getElementById('scoreRange');
             var input = document.getElementById('scoreInput');
             var emoji = document.getElementById('scoreEmoji');
+            var note = document.getElementById('noteInput');
+            var noteCount = document.getElementById('noteCount');
+
+            function updateNoteCount() {
+                noteCount.textContent = note.value.length + '/280';
+            }
+            updateNoteCount();
+            note.addEventListener('input', updateNoteCount);
 
             function emojiFor(value) {
                 var idx = Math.min(10, Math.max(1, Math.round(parseFloat(value) || 1)));

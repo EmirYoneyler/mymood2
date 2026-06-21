@@ -45,6 +45,17 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*m
 	return r.scanOne(ctx, query, username)
 }
 
+// Delete permanently removes a user and, via ON DELETE CASCADE, their mood
+// entries and friendships.
+func (r *UserRepository) Delete(ctx context.Context, id string) error {
+	const query = `DELETE FROM users WHERE id = $1`
+
+	if _, err := r.db.Exec(ctx, query, id); err != nil {
+		return fmt.Errorf("deleting user: %w", err)
+	}
+	return nil
+}
+
 func (r *UserRepository) GetByID(ctx context.Context, id string) (*models.User, error) {
 	const query = `
 		SELECT id, username, email, password_hash, avatar_url, bio, is_premium, created_at

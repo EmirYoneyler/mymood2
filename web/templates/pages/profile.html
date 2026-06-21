@@ -10,6 +10,13 @@
     <p class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">Puan kaldırıldı, o gün tekrar boş.</p>
     {{end}}
 
+    {{if and .Editable (eq .TotalEntries 0)}}
+    <div class="glass-card flex flex-wrap items-center justify-between gap-3 p-5">
+        <p class="text-sm text-slate-300">Henüz hiç puan vermedin. İlk gününü puanlayarak başla!</p>
+        <a href="/mood" class="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-95">Bugünü Puanla</a>
+    </div>
+    {{end}}
+
     <section class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold sm:text-3xl">{{.AverageScore}}</span>

@@ -113,7 +113,7 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 	data := fiber.Map{
 		"Editable":        editable,
 		"Username":        username,
-		"AverageScore":    fmt.Sprintf("%.1f", average),
+		"AverageScore":    formatAverage(average, count),
 		"TotalEntries":    count,
 		"CurrentStreak":   currentStreak(dates, lastActivity, hasActivity, today),
 		"LongestStreak":   longestStreak(dates),

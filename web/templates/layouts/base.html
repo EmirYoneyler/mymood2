@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>mymood</title>
+    <meta name="description" content="Günlük mood'unu puanla, arkadaşlarının gününü takip et.">
+    <meta property="og:title" content="mymood">
+    <meta property="og:description" content="Günlük mood'unu puanla, arkadaşlarının gününü takip et.">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -40,6 +45,7 @@
                     {{if .PendingCount}}<span class="badge">{{.PendingCount}}</span>{{end}}
                 </a>
                 <a href="/profile" class="nav-link">Profilim</a>
+                <a href="/settings" class="nav-link">Ayarlar</a>
                 <form method="POST" action="/logout" class="inline">
                     <button type="submit" class="nav-link">Çıkış</button>
                 </form>

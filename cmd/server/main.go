@@ -11,6 +11,7 @@ import (
 	custommw "github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/repository"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/template/html/v2"
@@ -36,6 +37,7 @@ func main() {
 	})
 
 	app.Use(logger.New())
+	app.Use(helmet.New())
 	app.Static("/static", "./web/static")
 
 	app.Get("/healthz", func(c *fiber.Ctx) error {
@@ -65,10 +67,17 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	friendHandler := handlers.NewFriendHandler(userRepo, friendshipRepo)
 	feedHandler := handlers.NewFeedHandler(moodRepo, friendshipRepo)
 	profileHandler := handlers.NewProfileHandler(moodRepo, friendshipRepo, userRepo)
+	settingsHandler := handlers.NewSettingsHandler(userRepo, friendshipRepo, cfg.IsProduction())
 
 	authLimiter := limiter.New(limiter.Config{
 		Max:        10,
 		Expiration: 1 * time.Minute,
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).Render("pages/error", fiber.Map{
+				"Title":   "429",
+				"Message": "Çok fazla deneme yaptın. Birkaç dakika sonra tekrar dene.",
+			}, "layouts/base")
+		},
 	})
 
 	app.Get("/register", authHandler.ShowRegister)
@@ -96,4 +105,14 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	app.Get("/feed", requireAuth, feedHandler.Show)
 	app.Get("/profile", requireAuth, profileHandler.Show)
 	app.Get("/profile/:username", requireAuth, profileHandler.ShowFriend)
+
+	app.Get("/settings", requireAuth, settingsHandler.Show)
+	app.Post("/settings/delete", requireAuth, settingsHandler.DeleteAccount)
+
+	app.Use(func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusNotFound).Render("pages/error", fiber.Map{
+			"Title":   "404",
+			"Message": "Bu sayfa bulunamadı.",
+		}, "layouts/base")
+	})
 }
