@@ -41,7 +41,7 @@
     <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body hx-boost="true" class="min-h-screen bg-base text-slate-100 font-sans antialiased">
-    <div hx-boost="false" class="fixed right-3 top-3 z-50 flex gap-1 text-xs">
+    <div hx-boost="false" class="fixed right-3 top-3 z-[60] flex gap-1 text-xs">
         <a href="/lang/en" class="rounded px-2 py-1 {{if eq .CurrentLang "en"}}bg-white/20 font-semibold{{else}}bg-white/5 text-slate-400 hover:bg-white/10{{end}}">EN</a>
         <a href="/lang/tr" class="rounded px-2 py-1 {{if eq .CurrentLang "tr"}}bg-white/20 font-semibold{{else}}bg-white/5 text-slate-400 hover:bg-white/10{{end}}">TR</a>
     </div>
