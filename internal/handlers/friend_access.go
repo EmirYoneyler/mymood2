@@ -3,6 +3,8 @@ package handlers
 import (
 	"errors"
 
+	"github.com/emiryoneyler/mymood/internal/i18n"
+	"github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/models"
 	"github.com/emiryoneyler/mymood/internal/repository"
 	"github.com/gofiber/fiber/v2"
@@ -27,7 +29,8 @@ func resolveFriendTarget(c *fiber.Ctx, users *repository.UserRepository, friends
 
 	friendship, err := friendships.GetBetween(c.Context(), viewerID, target.ID)
 	if errors.Is(err, repository.ErrNotFound) || (err == nil && friendship.Status != models.FriendshipAccepted) {
-		return nil, fiber.NewError(fiber.StatusForbidden, "Bu profili görmek için arkadaş olmanız gerekiyor.")
+		lang := middleware.CurrentLang(c)
+		return nil, fiber.NewError(fiber.StatusForbidden, i18n.T(lang, "friend_access.forbidden"))
 	}
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
 		return nil, fiber.ErrInternalServerError

@@ -1,53 +1,53 @@
 <main class="space-y-6">
     <h1 class="text-2xl font-extrabold">
-        {{if .Username}}@{{.Username}} Profili{{else}}Profilim{{end}}
+        {{if .Username}}{{call .T "profile.title_other" .Username}}{{else}}{{call .T "profile.title_self"}}{{end}}
     </h1>
 
     {{if .Saved}}
-    <p class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Mood'un kaydedildi!</p>
+    <p class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{{call .T "profile.saved"}}</p>
     {{end}}
     {{if .Removed}}
-    <p class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">Puan kaldırıldı, o gün tekrar boş.</p>
+    <p class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">{{call .T "profile.removed"}}</p>
     {{end}}
 
     {{if and .Editable (eq .TotalEntries 0)}}
     <div class="glass-card flex flex-wrap items-center justify-between gap-3 p-5">
-        <p class="text-sm text-slate-300">Henüz hiç puan vermedin. İlk gününü puanlayarak başla!</p>
-        <a href="/mood" class="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-95">Bugünü Puanla</a>
+        <p class="text-sm text-slate-300">{{call .T "profile.empty_state"}}</p>
+        <a href="/mood" class="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-95">{{call .T "profile.rate_today"}}</a>
     </div>
     {{end}}
 
     <section class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold sm:text-3xl">{{.AverageScore}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">Tüm Zamanlar Ortalaması</span>
+            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.all_time_avg"}}</span>
         </div>
         <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold text-cyan-300 sm:text-3xl">{{.CurrentStreak}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">Güncel Streak</span>
+            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.current_streak"}}</span>
         </div>
         <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold sm:text-3xl">{{.LongestStreak}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">Rekor Streak</span>
+            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.longest_streak"}}</span>
         </div>
         <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold sm:text-3xl">{{.TotalEntries}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">Toplam Giriş</span>
+            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.total_entries"}}</span>
         </div>
     </section>
 
     <section class="grid grid-cols-3 gap-3 sm:gap-4">
         <div class="glass-card p-4 text-center sm:p-6">
             <span class="block text-2xl font-extrabold text-fuchsia-300 sm:text-3xl">{{.WeekAverage}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">Bu Hafta</span>
+            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.this_week"}}</span>
         </div>
         <a href="{{.MonthsLink}}" class="glass-card p-4 text-center transition hover:bg-white/10 sm:p-6">
             <span class="block text-2xl font-extrabold text-fuchsia-300 sm:text-3xl">{{.MonthAverage}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">Bu Ay <span class="text-fuchsia-400">→</span></span>
+            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.this_month"}} <span class="text-fuchsia-400">→</span></span>
         </a>
         <a href="{{.YearsLink}}" class="glass-card p-4 text-center transition hover:bg-white/10 sm:p-6">
             <span class="block text-2xl font-extrabold text-fuchsia-300 sm:text-3xl">{{.YearAverage}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">Bu Yıl <span class="text-fuchsia-400">→</span></span>
+            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.this_year"}} <span class="text-fuchsia-400">→</span></span>
         </a>
     </section>
 
@@ -60,14 +60,14 @@
                     {{else}}
                     <span class="rounded-lg border border-white/5 px-2 py-1 text-sm text-slate-600">←</span>
                     {{end}}
-                    <h2 class="text-lg font-bold">{{.Calendar.Year}} Takvimi</h2>
+                    <h2 class="text-lg font-bold">{{call .T "profile.calendar_title" .Calendar.Year}}</h2>
                     {{if .HasNextYear}}
                     <a href="?year={{.NextYear}}" class="rounded-lg border border-white/10 px-2 py-1 text-sm text-slate-300 transition hover:bg-white/10">→</a>
                     {{else}}
                     <span class="rounded-lg border border-white/5 px-2 py-1 text-sm text-slate-600">→</span>
                     {{end}}
                 </div>
-                {{if .Editable}}<p class="text-xs text-slate-500">Bir günü tıklayarak puan ekle/güncelle</p>{{end}}
+                {{if .Editable}}<p class="text-xs text-slate-500">{{call .T "profile.calendar_hint"}}</p>{{end}}
             </div>
             <div class="calendar-scroll">
                 <table class="calendar-table">
@@ -116,7 +116,7 @@
 
         <div class="space-y-4">
             <div class="glass-card p-5">
-                <h3 class="mb-3 text-sm font-bold text-slate-300">Dağılım</h3>
+                <h3 class="mb-3 text-sm font-bold text-slate-300">{{call .T "profile.distribution"}}</h3>
                 <ul class="space-y-2">
                     {{range .Distribution}}
                     <li class="flex items-center justify-between text-sm">
@@ -128,21 +128,21 @@
             </div>
 
             <div class="glass-card p-5">
-                <h3 class="mb-3 text-sm font-bold text-slate-300">{{.Calendar.Year}} Özeti</h3>
+                <h3 class="mb-3 text-sm font-bold text-slate-300">{{call .T "profile.summary_title" .Calendar.Year}}</h3>
                 <ul class="space-y-2 text-sm">
-                    <li class="flex items-center justify-between"><span class="text-slate-400">Günlük Ortalama</span><span class="font-semibold">{{.ViewYearAverage}}</span></li>
-                    <li class="flex items-center justify-between"><span class="text-slate-400">Takip Edilen Gün</span><span class="font-semibold">{{.YearDaysTracked}}</span></li>
-                    <li class="flex items-center justify-between"><span class="text-slate-400">Takip Oranı</span><span class="font-semibold">%{{.TrackingRate}}</span></li>
+                    <li class="flex items-center justify-between"><span class="text-slate-400">{{call .T "profile.daily_average"}}</span><span class="font-semibold">{{.ViewYearAverage}}</span></li>
+                    <li class="flex items-center justify-between"><span class="text-slate-400">{{call .T "profile.days_tracked"}}</span><span class="font-semibold">{{.YearDaysTracked}}</span></li>
+                    <li class="flex items-center justify-between"><span class="text-slate-400">{{call .T "profile.tracking_rate"}}</span><span class="font-semibold">%{{.TrackingRate}}</span></li>
                 </ul>
             </div>
 
             <div class="glass-card p-5">
-                <h3 class="mb-3 text-sm font-bold text-slate-300">Lejant</h3>
+                <h3 class="mb-3 text-sm font-bold text-slate-300">{{call .T "profile.legend"}}</h3>
                 <ul class="space-y-1.5 text-xs text-slate-400">
                     {{range .Legend}}
                     <li><span class="legend-swatch" style="background-color:{{.Color}}"></span>{{.Range}} {{.Label}}</li>
                     {{end}}
-                    <li><span class="legend-swatch cal-empty"></span>Boş</li>
+                    <li><span class="legend-swatch cal-empty"></span>{{call .T "profile.empty_swatch"}}</li>
                 </ul>
             </div>
         </div>

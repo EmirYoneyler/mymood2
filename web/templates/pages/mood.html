@@ -2,12 +2,12 @@
     <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
             <h1 class="text-2xl font-extrabold">
-                {{if .IsToday}}Bugün nasılsın?{{else}}{{.SelectedDate.Format "02 Jan 2006"}} nasıldı?{{end}}
+                {{if .IsToday}}{{call .T "mood.title_today"}}{{else}}{{call .T "mood.title_other" .SelectedDateText}}{{end}}
             </h1>
-            <p class="mt-1 text-sm text-slate-400">Puanını seç (ondalıklı olabilir, örn. 7.6), istersen kısa bir not bırak.</p>
+            <p class="mt-1 text-sm text-slate-400">{{call .T "mood.subtitle"}}</p>
         </div>
         <form method="GET" action="/mood">
-            <label class="mb-1 block text-xs font-medium text-slate-400">Geçmiş bir günü puanla</label>
+            <label class="mb-1 block text-xs font-medium text-slate-400">{{call .T "mood.rate_past_day"}}</label>
             <input type="date" name="date" max="{{.MaxDate}}" value="{{.SelectedDate.Format "2006-01-02"}}"
                 onchange="this.form.submit()"
                 class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
@@ -36,15 +36,15 @@
             </div>
         </div>
 
-        <label class="mb-1 mt-6 block text-sm font-medium text-slate-300">Not (opsiyonel)</label>
-        <textarea name="note" id="noteInput" maxlength="280" placeholder="Günün nasıl geçti?"
+        <label class="mb-1 mt-6 block text-sm font-medium text-slate-300">{{call .T "mood.note_label"}}</label>
+        <textarea name="note" id="noteInput" maxlength="280" placeholder="{{call .T "mood.note_placeholder"}}"
             class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30"
             rows="3">{{.NoteText}}</textarea>
         <p id="noteCount" class="mt-1 text-right text-xs text-slate-500">0/280</p>
 
         <button type="submit"
             class="mt-4 rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-[0.98]">
-            Kaydet
+            {{call .T "mood.save"}}
         </button>
     </form>
 
@@ -53,7 +53,7 @@
         <input type="hidden" name="entry_date" value="{{.SelectedDate.Format "2006-01-02"}}">
         <button type="submit"
             class="rounded-xl border border-red-400/30 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-400/10 active:scale-[0.98]">
-            Puanı Kaldır
+            {{call .T "mood.remove"}}
         </button>
     </form>
     {{end}}

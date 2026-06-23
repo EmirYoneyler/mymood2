@@ -1,7 +1,7 @@
 <main class="flex min-h-[70vh] items-center justify-center">
     <div class="glass-card w-full max-w-sm p-8">
-        <h1 class="mb-1 text-2xl font-extrabold">Kayıt Ol</h1>
-        <p class="mb-6 text-sm text-slate-400">30 saniyede günün nasıl geçtiğini paylaş.</p>
+        <h1 class="mb-1 text-2xl font-extrabold">{{call .T "register.title"}}</h1>
+        <p class="mb-6 text-sm text-slate-400">{{call .T "register.subtitle"}}</p>
 
         {{if .Error}}
         <p class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{{.Error}}</p>
@@ -9,40 +9,40 @@
 
         <form method="POST" action="/register" class="space-y-4">
             <div>
-                <label class="mb-1 block text-sm font-medium text-slate-300">Kullanıcı Adı</label>
+                <label class="mb-1 block text-sm font-medium text-slate-300">{{call .T "register.username"}}</label>
                 <input type="text" name="username" required minlength="3" maxlength="30" value="{{.Username}}"
-                    pattern="[A-Za-z0-9]+" title="Sadece harf ve rakam, boşluk veya özel karakter olmadan"
+                    pattern="[A-Za-z0-9]+" title="{{call .T "register.username_pattern_title"}}"
                     class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
-                <p class="mt-1 text-xs text-slate-500">Sadece harf ve rakam, boşluk olmadan (örn. emiry)</p>
+                <p class="mt-1 text-xs text-slate-500">{{call .T "register.username_hint"}}</p>
             </div>
             <div>
-                <label class="mb-1 block text-sm font-medium text-slate-300">E-posta</label>
+                <label class="mb-1 block text-sm font-medium text-slate-300">{{call .T "register.email"}}</label>
                 <input type="email" name="email" required value="{{.Email}}"
                     class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
             </div>
             <div>
-                <label class="mb-1 block text-sm font-medium text-slate-300">Şifre</label>
+                <label class="mb-1 block text-sm font-medium text-slate-300">{{call .T "register.password"}}</label>
                 <div class="relative">
                     <input type="password" name="password" id="password" required minlength="8"
                         class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 pr-16 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
-                    <button type="button" id="togglePassword"
-                        class="absolute inset-y-0 right-0 px-3 text-xs font-medium text-slate-400 hover:text-slate-200">Göster</button>
+                    <button type="button" id="togglePassword" data-show-text="{{call .T "login.show"}}" data-hide-text="{{call .T "login.hide"}}"
+                        class="absolute inset-y-0 right-0 px-3 text-xs font-medium text-slate-400 hover:text-slate-200">{{call .T "login.show"}}</button>
                 </div>
-                <p class="mt-1 text-xs text-slate-500">En az 8 karakter</p>
+                <p class="mt-1 text-xs text-slate-500">{{call .T "register.password_hint"}}</p>
             </div>
             <div>
-                <label class="mb-1 block text-sm font-medium text-slate-300">Şifre (tekrar)</label>
+                <label class="mb-1 block text-sm font-medium text-slate-300">{{call .T "register.password_confirm"}}</label>
                 <input type="password" name="password_confirm" required minlength="8"
                     class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
             </div>
             <button type="submit"
                 class="w-full rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-[0.98]">
-                Kayıt Ol
+                {{call .T "register.submit"}}
             </button>
         </form>
 
         <p class="mt-6 text-center text-sm text-slate-400">
-            Hesabın var mı? <a href="/login" class="font-medium text-fuchsia-400 hover:text-fuchsia-300">Giriş yap</a>
+            {{call .T "register.have_account"}} <a href="/login" class="font-medium text-fuchsia-400 hover:text-fuchsia-300">{{call .T "register.login_link"}}</a>
         </p>
     </div>
 
@@ -53,7 +53,7 @@
             btn.addEventListener('click', function () {
                 var show = input.type === 'password';
                 input.type = show ? 'text' : 'password';
-                btn.textContent = show ? 'Gizle' : 'Göster';
+                btn.textContent = show ? btn.dataset.hideText : btn.dataset.showText;
             });
         })();
     </script>

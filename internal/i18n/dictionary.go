@@ -1,0 +1,177 @@
+package i18n
+
+// en is the English dictionary (default language).
+var en = map[string]string{
+	// nav
+	"nav.feed":     "Feed",
+	"nav.today":    "Today",
+	"nav.friends":  "Friends",
+	"nav.profile":  "Profile",
+	"nav.settings": "Settings",
+	"nav.logout":   "Log Out",
+
+	// meta
+	"meta.description": "Rate your day, follow your friends' days.",
+
+	// landing
+	"landing.login":               "Log In",
+	"landing.register":            "Sign Up",
+	"landing.hero_line1":          "Rate your day.",
+	"landing.hero_line2":          "Share it with friends.",
+	"landing.hero_sub":            "Take 30 seconds a day, give a score from 1-10 (decimals welcome), add a quick note if you like. See your friends' days too, and let them see yours.",
+	"landing.cta_register":        "Sign Up Free",
+	"landing.cta_login":           "I already have an account",
+	"landing.showcase_daily":      "Daily Rating",
+	"landing.showcase_calendar":   "Colorful Calendar",
+	"landing.showcase_feed":       "Friend Feed",
+	"landing.showcase_feed_note1": "Great day!",
+	"landing.showcase_feed_note2": "An average day.",
+
+	// login
+	"login.title":              "Log In",
+	"login.subtitle":           "Keep rating your days.",
+	"login.auth_required":      "Please log in to view this page.",
+	"login.email":              "Email",
+	"login.password":           "Password",
+	"login.show":               "Show",
+	"login.hide":               "Hide",
+	"login.submit":             "Log In",
+	"login.no_account":         "Don't have an account?",
+	"login.register_link":      "Sign up",
+	"login.error_invalid_form": "Invalid form data.",
+	"login.error_required":     "Email and password are required.",
+	"login.error_wrong":        "Wrong email or password.",
+
+	// register
+	"register.title":                   "Sign Up",
+	"register.subtitle":                "Share how your day went in 30 seconds.",
+	"register.username":                "Username",
+	"register.username_hint":           "Letters and numbers only, no spaces (e.g. emiry)",
+	"register.username_pattern_title":  "Letters and numbers only, no spaces or special characters",
+	"register.email":                   "Email",
+	"register.password":                "Password",
+	"register.password_hint":           "At least 8 characters",
+	"register.password_confirm":        "Confirm Password",
+	"register.submit":                  "Sign Up",
+	"register.have_account":            "Already have an account?",
+	"register.login_link":              "Log in",
+	"register.error_invalid_form":      "Invalid form data.",
+	"register.error_validation":        "Please fill in all fields correctly (username 3-30 characters, letters/numbers only, no spaces; password at least 8 characters).",
+	"register.error_password_mismatch": "Passwords don't match.",
+	"register.error_taken":             "This username or email is already in use.",
+
+	// mood
+	"mood.title_today":        "How's your day?",
+	"mood.title_other":        "%s — how was it?",
+	"mood.subtitle":           "Pick your score (decimals OK, e.g. 7.6), leave a short note if you'd like.",
+	"mood.rate_past_day":      "Rate a past day",
+	"mood.note_label":         "Note (optional)",
+	"mood.note_placeholder":   "How did your day go?",
+	"mood.save":               "Save",
+	"mood.remove":             "Remove Score",
+	"mood.error_invalid_form": "Invalid form data.",
+	"mood.error_validation":   "Score must be between 1.0-10.0, note can be at most 280 characters.",
+	"mood.error_save_failed":  "Couldn't save your mood, please try again.",
+
+	// friends
+	"friends.title":              "Friends",
+	"friends.search_placeholder": "Search by username...",
+	"friends.search_button":      "Search",
+	"friends.send_request":       "Send Request",
+	"friends.no_results":         "No results found.",
+	"friends.pending_title":      "Pending Requests",
+	"friends.accept":             "Accept",
+	"friends.reject":             "Reject",
+	"friends.your_friends":       "Your Friends",
+	"friends.view_profile":       "View Profile",
+	"friends.remove_friend":      "Remove Friend",
+	"friends.no_friends":         "You don't have any friends yet. Search by username above.",
+
+	// feed
+	"feed.rated_today_q":      "Rated your day yet?",
+	"feed.rate_today":         "Rate Today",
+	"feed.your_friends":       "Your Friends",
+	"feed.manage_friends":     "Manage friends →",
+	"feed.view_profile_stats": "View my profile and stats →",
+	"feed.title":              "Feed",
+	"feed.no_friends":         "You don't have any friends yet.",
+	"feed.add_friend":         "Add a friend",
+	"feed.no_friends_suffix":  "and your feed will come alive.",
+	"feed.no_entries":         "Your friends haven't shared a mood yet.",
+
+	// profile
+	"profile.title_self":     "My Profile",
+	"profile.title_other":    "@%s's Profile",
+	"profile.saved":          "Your mood was saved!",
+	"profile.removed":        "Score removed, that day is empty again.",
+	"profile.empty_state":    "You haven't rated a day yet. Get started with your first one!",
+	"profile.rate_today":     "Rate Today",
+	"profile.all_time_avg":   "All-Time Average",
+	"profile.current_streak": "Current Streak",
+	"profile.longest_streak": "Longest Streak",
+	"profile.total_entries":  "Total Entries",
+	"profile.this_week":      "This Week",
+	"profile.this_month":     "This Month",
+	"profile.this_year":      "This Year",
+	"profile.calendar_title": "%d Calendar",
+	"profile.calendar_hint":  "Click a day to add/update a score",
+	"profile.distribution":   "Distribution",
+	"profile.summary_title":  "%d Summary",
+	"profile.daily_average":  "Daily Average",
+	"profile.days_tracked":   "Days Tracked",
+	"profile.tracking_rate":  "Tracking Rate",
+	"profile.legend":         "Legend",
+	"profile.empty_swatch":   "Empty",
+
+	// months
+	"months.back_to_profile":        "← Back to my profile",
+	"months.back_to_username":       "← Back to @%s's profile",
+	"months.title_self":             "Monthly Averages",
+	"months.title_other":            "@%s - Monthly Averages",
+	"months.days_suffix":            "days",
+	"months.no_entries_self":        "You don't have any mood entries yet. ",
+	"months.rate_today_link":        "Rate today",
+	"months.no_entries_self_suffix": "and it'll show up here.",
+	"months.no_entries_other":       "@%s hasn't logged any moods yet.",
+
+	// years
+	"years.title_self":          "Yearly Notes",
+	"years.title_other":         "@%s - Yearly Notes",
+	"years.subtitle":            `Rate a past year as a whole, independent of daily entries (e.g. "2024 was great, I'd give it an 8"). This year is always your live daily average.`,
+	"years.saved":               "Year rating saved!",
+	"years.removed":             "Year rating removed.",
+	"years.current_year_suffix": "(this year, automatic)",
+	"years.score_placeholder":   "Score",
+	"years.note_placeholder":    "Note (optional)",
+	"years.update":              "Update",
+	"years.rate":                "Rate",
+	"years.remove":              "Remove",
+
+	// settings
+	"settings.title":                  "Settings",
+	"settings.account_info":           "Account Info",
+	"settings.username":               "Username",
+	"settings.email":                  "Email",
+	"settings.danger_zone":            "Danger Zone",
+	"settings.danger_desc":            "Deleting your account permanently removes all your mood history, notes, and friendships. This cannot be undone.",
+	"settings.confirm_password_label": "Type your password to confirm",
+	"settings.delete_button":          "Permanently Delete My Account",
+	"settings.delete_confirm_js":      "Are you sure you want to permanently delete your account and all your data?",
+	"settings.error_invalid_form":     "Invalid form data.",
+	"settings.error_wrong_password":   "Wrong password, your account was not deleted.",
+
+	// error pages
+	"error.back_home":                 "Back to home",
+	"error.not_found_message":         "This page could not be found.",
+	"error.too_many_requests_message": "Too many attempts. Please try again in a few minutes.",
+
+	// friend access
+	"friend_access.forbidden": "You need to be friends to see this profile.",
+
+	// mood buckets
+	"bucket.excellent": "Excellent",
+	"bucket.great":     "Great",
+	"bucket.good":      "Good",
+	"bucket.low":       "Low",
+	"bucket.poor":      "Poor",
+}

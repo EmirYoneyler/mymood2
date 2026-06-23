@@ -8,6 +8,7 @@ import (
 	"github.com/emiryoneyler/mymood/internal/config"
 	"github.com/emiryoneyler/mymood/internal/database"
 	"github.com/emiryoneyler/mymood/internal/handlers"
+	"github.com/emiryoneyler/mymood/internal/i18n"
 	custommw "github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/repository"
 	"github.com/gofiber/fiber/v2"
@@ -48,10 +49,29 @@ func main() {
 		c.Response().Header.Del("Cross-Origin-Embedder-Policy")
 		return c.Next()
 	})
+	app.Use(custommw.LoadLang())
 	app.Static("/static", "./web/static")
 
 	app.Get("/healthz", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
+	})
+
+	app.Get("/lang/:code", func(c *fiber.Ctx) error {
+		code := c.Params("code")
+		if i18n.Supported(code) {
+			c.Cookie(&fiber.Cookie{
+				Name:     custommw.LangCookieName,
+				Value:    code,
+				Path:     "/",
+				MaxAge:   365 * 24 * 60 * 60,
+				SameSite: fiber.CookieSameSiteLaxMode,
+			})
+		}
+		ref := c.Get("Referer")
+		if ref == "" {
+			ref = "/"
+		}
+		return c.Redirect(ref)
 	})
 
 	if cfg.DatabaseURL != "" {
@@ -87,9 +107,13 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 		Max:        10,
 		Expiration: 1 * time.Minute,
 		LimitReached: func(c *fiber.Ctx) error {
-			return c.Status(fiber.StatusTooManyRequests).Render("pages/error", fiber.Map{
-				"Title":   "429",
-				"Message": "Çok fazla deneme yaptın. Birkaç dakika sonra tekrar dene.",
+			lang := custommw.CurrentLang(c)
+			c.Status(fiber.StatusTooManyRequests)
+			return c.Render("pages/error", fiber.Map{
+				"Title":       "429",
+				"Message":     i18n.T(lang, "error.too_many_requests_message"),
+				"T":           i18n.Translator(lang),
+				"CurrentLang": lang,
 			}, "layouts/base")
 		},
 	})
@@ -104,7 +128,11 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 		if _, ok := custommw.UserIDFromContext(c); ok {
 			return c.Redirect("/feed")
 		}
-		return c.Render("pages/landing", fiber.Map{}, "layouts/base")
+		lang := custommw.CurrentLang(c)
+		return c.Render("pages/landing", fiber.Map{
+			"T":           i18n.Translator(lang),
+			"CurrentLang": lang,
+		}, "layouts/base")
 	})
 
 	requireAuth := custommw.RequireAuth(cfg.JWTSecret)
@@ -133,9 +161,13 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	app.Post("/settings/delete", requireAuth, settingsHandler.DeleteAccount)
 
 	app.Use(func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusNotFound).Render("pages/error", fiber.Map{
-			"Title":   "404",
-			"Message": "Bu sayfa bulunamadı.",
+		lang := custommw.CurrentLang(c)
+		c.Status(fiber.StatusNotFound)
+		return c.Render("pages/error", fiber.Map{
+			"Title":       "404",
+			"Message":     i18n.T(lang, "error.not_found_message"),
+			"T":           i18n.Translator(lang),
+			"CurrentLang": lang,
 		}, "layouts/base")
 	})
 }

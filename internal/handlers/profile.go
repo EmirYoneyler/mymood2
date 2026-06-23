@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/emiryoneyler/mymood/internal/i18n"
 	"github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/models"
 	"github.com/emiryoneyler/mymood/internal/repository"
@@ -58,6 +59,7 @@ func (h *ProfileHandler) ShowFriend(c *fiber.Ctx) error {
 
 func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, username string, editable bool, flash fiber.Map) error {
 	ctx := c.Context()
+	lang := middleware.CurrentLang(c)
 	today := todayDate()
 
 	average, count, err := h.moods.Stats(ctx, targetID)
@@ -131,9 +133,9 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		"WeekAverage":     formatAverage(weekAvg, weekCount),
 		"MonthAverage":    formatAverage(monthAvg, monthCount),
 		"YearAverage":     formatAverage(yearAvg, yearCount),
-		"Calendar":        buildYearCalendar(viewYear, today, viewYearEntries, editable),
-		"Distribution":    buildDistribution(viewYearEntries),
-		"Legend":          buildLegend(),
+		"Calendar":        buildYearCalendar(viewYear, today, viewYearEntries, editable, lang),
+		"Distribution":    buildDistribution(viewYearEntries, lang),
+		"Legend":          buildLegend(lang),
 		"ViewYear":        viewYear,
 		"PrevYear":        viewYear - 1,
 		"NextYear":        viewYear + 1,
@@ -147,7 +149,7 @@ func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, usernam
 		data[k] = v
 	}
 
-	return c.Render("pages/profile", withNav(ctx, h.friendships, viewerID, data), "layouts/base")
+	return renderPage(c, "pages/profile", withNav(ctx, h.friendships, viewerID, data), "layouts/base")
 }
 
 func clampYear(year, min, max int) int {
@@ -239,18 +241,18 @@ func currentStreak(dates []time.Time, lastActivity time.Time, hasActivity bool, 
 // bucketFor classifies a score into one of five named buckets, used to group
 // the distribution breakdown and the legend (the calendar itself uses a
 // continuous gradient via scoreColor, not these discrete buckets).
-func bucketFor(score float64) (label, class string) {
+func bucketFor(score float64) string {
 	switch {
 	case score >= 9:
-		return "Mükemmel", "excellent"
+		return "excellent"
 	case score >= 7:
-		return "Harika", "great"
+		return "great"
 	case score >= 5:
-		return "İyi", "good"
+		return "good"
 	case score >= 3:
-		return "Düşük", "low"
+		return "low"
 	default:
-		return "Kötü", "poor"
+		return "poor"
 	}
 }
 
@@ -321,13 +323,13 @@ type yearCalendar struct {
 	MonthAverages []string
 }
 
-func buildYearCalendar(year int, today time.Time, entries []models.MoodEntry, editable bool) yearCalendar {
+func buildYearCalendar(year int, today time.Time, entries []models.MoodEntry, editable bool, lang string) yearCalendar {
 	scoreByDate := make(map[string]float64, len(entries))
 	for _, e := range entries {
 		scoreByDate[e.EntryDate.Format("2006-01-02")] = e.Score
 	}
 
-	monthNames := []string{"Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"}
+	monthNames := i18n.MonthAbbrs(lang)
 
 	rows := make([]calendarRow, 31)
 	monthSums := make([]float64, 12)
@@ -387,14 +389,6 @@ var bucketRepresentative = map[string]float64{
 
 var bucketOrder = []string{"excellent", "great", "good", "low", "poor"}
 
-var bucketLabels = map[string]string{
-	"excellent": "Mükemmel",
-	"great":     "Harika",
-	"good":      "İyi",
-	"low":       "Düşük",
-	"poor":      "Kötü",
-}
-
 type bucketStat struct {
 	Label string
 	Color string
@@ -402,11 +396,12 @@ type bucketStat struct {
 	Pct   int
 }
 
-func buildDistribution(entries []models.MoodEntry) []bucketStat {
+func buildDistribution(entries []models.MoodEntry, lang string) []bucketStat {
+	t := i18n.Translator(lang)
+
 	counts := map[string]int{}
 	for _, e := range entries {
-		_, class := bucketFor(e.Score)
-		counts[class]++
+		counts[bucketFor(e.Score)]++
 	}
 
 	total := len(entries)
@@ -417,7 +412,7 @@ func buildDistribution(entries []models.MoodEntry) []bucketStat {
 			pct = int(float64(counts[class]) / float64(total) * 100)
 		}
 		stats = append(stats, bucketStat{
-			Label: bucketLabels[class],
+			Label: t("bucket." + class),
 			Color: scoreGradient(bucketRepresentative[class]).Hex(),
 			Count: counts[class],
 			Pct:   pct,
@@ -433,7 +428,8 @@ type legendItem struct {
 	Color string
 }
 
-func buildLegend() []legendItem {
+func buildLegend(lang string) []legendItem {
+	t := i18n.Translator(lang)
 	ranges := map[string]string{
 		"excellent": "9-10",
 		"great":     "7-8.9",
@@ -446,7 +442,7 @@ func buildLegend() []legendItem {
 	for _, class := range bucketOrder {
 		items = append(items, legendItem{
 			Range: ranges[class],
-			Label: bucketLabels[class],
+			Label: t("bucket." + class),
 			Color: scoreGradient(bucketRepresentative[class]).Hex(),
 		})
 	}

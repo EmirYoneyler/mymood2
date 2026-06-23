@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emiryoneyler/mymood/internal/i18n"
 	"github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/models"
 	"github.com/emiryoneyler/mymood/internal/repository"
@@ -63,6 +64,7 @@ func parseEntryDate(raw string) time.Time {
 
 func (h *MoodHandler) ShowForm(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
+	lang := middleware.CurrentLang(c)
 
 	entryDate := parseEntryDate(c.Query("date"))
 
@@ -71,27 +73,29 @@ func (h *MoodHandler) ShowForm(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	return c.Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
-		"Today":        entry,
-		"NoteText":     noteText(entry),
-		"SelectedDate": entryDate,
-		"IsToday":      entryDate.Equal(todayDate()),
-		"MaxDate":      todayDate().Format("2006-01-02"),
+	return renderPage(c, "pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
+		"Today":            entry,
+		"NoteText":         noteText(entry),
+		"SelectedDate":     entryDate,
+		"SelectedDateText": i18n.FormatDate(lang, entryDate),
+		"IsToday":          entryDate.Equal(todayDate()),
+		"MaxDate":          todayDate().Format("2006-01-02"),
 	}), "layouts/base")
 }
 
 func (h *MoodHandler) Submit(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
+	lang := middleware.CurrentLang(c)
 
 	var form moodForm
 	if err := c.BodyParser(&form); err != nil {
-		return h.renderError(c, userID, "Geçersiz form verisi.", todayDate())
+		return h.renderError(c, userID, i18n.T(lang, "mood.error_invalid_form"), todayDate())
 	}
 
 	entryDate := parseEntryDate(form.EntryDate)
 
 	if err := h.validate.Struct(form); err != nil {
-		return h.renderError(c, userID, "Puan 1.0-10.0 arasında olmalı, not en fazla 280 karakter olabilir.", entryDate)
+		return h.renderError(c, userID, i18n.T(lang, "mood.error_validation"), entryDate)
 	}
 
 	var note *string
@@ -101,7 +105,7 @@ func (h *MoodHandler) Submit(c *fiber.Ctx) error {
 
 	_, err := h.moods.Upsert(c.Context(), userID, form.Score, models.MoodEmoji(form.Score), note, entryDate)
 	if err != nil {
-		return h.renderError(c, userID, "Mood kaydedilemedi, lütfen tekrar dene.", entryDate)
+		return h.renderError(c, userID, i18n.T(lang, "mood.error_save_failed"), entryDate)
 	}
 
 	return c.Redirect("/profile?saved=1")
@@ -127,11 +131,14 @@ func (h *MoodHandler) Delete(c *fiber.Ctx) error {
 }
 
 func (h *MoodHandler) renderError(c *fiber.Ctx, userID, message string, entryDate time.Time) error {
-	return c.Status(fiber.StatusBadRequest).Render("pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
-		"Error":        message,
-		"SelectedDate": entryDate,
-		"IsToday":      entryDate.Equal(todayDate()),
-		"MaxDate":      todayDate().Format("2006-01-02"),
+	lang := middleware.CurrentLang(c)
+	c.Status(fiber.StatusBadRequest)
+	return renderPage(c, "pages/mood", withNav(c.Context(), h.friendships, userID, fiber.Map{
+		"Error":            message,
+		"SelectedDate":     entryDate,
+		"SelectedDateText": i18n.FormatDate(lang, entryDate),
+		"IsToday":          entryDate.Equal(todayDate()),
+		"MaxDate":          todayDate().Format("2006-01-02"),
 	}), "layouts/base")
 }
 

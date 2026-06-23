@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/emiryoneyler/mymood/internal/i18n"
 	"github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/repository"
 	"github.com/gofiber/fiber/v2"
@@ -25,7 +26,7 @@ func (h *SettingsHandler) Show(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	return c.Render("pages/settings", withNav(c.Context(), h.friendships, userID, fiber.Map{
+	return renderPage(c, "pages/settings", withNav(c.Context(), h.friendships, userID, fiber.Map{
 		"Username": user.Username,
 		"Email":    user.Email,
 	}), "layouts/base")
@@ -37,10 +38,11 @@ type deleteAccountForm struct {
 
 func (h *SettingsHandler) DeleteAccount(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
+	lang := middleware.CurrentLang(c)
 
 	var form deleteAccountForm
 	if err := c.BodyParser(&form); err != nil {
-		return h.renderSettingsError(c, userID, "Geçersiz form verisi.")
+		return h.renderSettingsError(c, userID, i18n.T(lang, "settings.error_invalid_form"))
 	}
 
 	user, err := h.users.GetByID(c.Context(), userID)
@@ -49,7 +51,7 @@ func (h *SettingsHandler) DeleteAccount(c *fiber.Ctx) error {
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(form.Password)); err != nil {
-		return h.renderSettingsError(c, userID, "Şifre yanlış, hesabın silinmedi.")
+		return h.renderSettingsError(c, userID, i18n.T(lang, "settings.error_wrong_password"))
 	}
 
 	if err := h.users.Delete(c.Context(), userID); err != nil {
@@ -74,7 +76,8 @@ func (h *SettingsHandler) renderSettingsError(c *fiber.Ctx, userID, message stri
 		return fiber.ErrInternalServerError
 	}
 
-	return c.Status(fiber.StatusBadRequest).Render("pages/settings", withNav(c.Context(), h.friendships, userID, fiber.Map{
+	c.Status(fiber.StatusBadRequest)
+	return renderPage(c, "pages/settings", withNav(c.Context(), h.friendships, userID, fiber.Map{
 		"Username": user.Username,
 		"Email":    user.Email,
 		"Error":    message,

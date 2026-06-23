@@ -102,7 +102,7 @@ func (h *YearsHandler) render(c *fiber.Ctx, viewerID, targetID, username string,
 		profileLink = "/profile/" + username
 	}
 
-	return c.Render("pages/years", withNav(ctx, h.friendships, viewerID, fiber.Map{
+	return renderPage(c, "pages/years", withNav(ctx, h.friendships, viewerID, fiber.Map{
 		"Years":       rows,
 		"Editable":    editable,
 		"Username":    username,

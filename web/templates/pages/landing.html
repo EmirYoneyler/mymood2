@@ -1,29 +1,29 @@
 <main>
-    <header class="flex items-center justify-between py-2">
+    <header class="flex items-center justify-between py-2 pr-16">
         <span class="bg-brand-gradient bg-clip-text text-xl font-extrabold text-transparent">mymood</span>
         <div class="flex items-center gap-3">
-            <a href="/login" class="text-sm font-medium text-slate-300 hover:text-white">Giriş Yap</a>
-            <a href="/register" class="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-95">Kayıt Ol</a>
+            <a href="/login" class="text-sm font-medium text-slate-300 hover:text-white">{{call .T "landing.login"}}</a>
+            <a href="/register" class="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-95">{{call .T "landing.register"}}</a>
         </div>
     </header>
 
     <section class="py-16 text-center sm:py-24">
         <h1 class="mx-auto max-w-2xl text-4xl font-extrabold leading-tight sm:text-5xl">
-            Gününü puanla.<br>
-            <span class="bg-brand-gradient bg-clip-text text-transparent">Arkadaşlarınla paylaş.</span>
+            {{call .T "landing.hero_line1"}}<br>
+            <span class="bg-brand-gradient bg-clip-text text-transparent">{{call .T "landing.hero_line2"}}</span>
         </h1>
         <p class="mx-auto mt-5 max-w-md text-slate-400">
-            Günde 30 saniye ayır, 1-10 arası (ondalıklı) bir puan ver, istersen kısa bir not ekle. Arkadaşların da gününü görsün, sen de onların.
+            {{call .T "landing.hero_sub"}}
         </p>
         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <a href="/register" class="rounded-xl bg-brand-gradient px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-95">Ücretsiz Kayıt Ol</a>
-            <a href="/login" class="rounded-xl border border-white/15 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">Zaten hesabım var</a>
+            <a href="/register" class="rounded-xl bg-brand-gradient px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-95">{{call .T "landing.cta_register"}}</a>
+            <a href="/login" class="rounded-xl border border-white/15 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/10">{{call .T "landing.cta_login"}}</a>
         </div>
     </section>
 
     <section class="grid grid-cols-1 gap-5 pb-16 sm:grid-cols-3">
         <div class="glass-card p-5">
-            <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Günlük Puanlama</p>
+            <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{{call .T "landing.showcase_daily"}}</p>
             <div class="flex flex-col items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-4">
                 <span class="text-4xl">😄</span>
                 <div class="h-1.5 w-full rounded-full bg-white/10">
@@ -34,7 +34,7 @@
         </div>
 
         <div class="glass-card p-5">
-            <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Renkli Takvim</p>
+            <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{{call .T "landing.showcase_calendar"}}</p>
             <div class="grid grid-cols-7 gap-1.5 rounded-xl border border-white/5 bg-white/5 p-4">
                 <div class="cal-cell" style="background-color:#dc2626">3</div>
                 <div class="cal-cell" style="background-color:#f97316">5</div>
@@ -54,13 +54,13 @@
         </div>
 
         <div class="glass-card p-5">
-            <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Arkadaş Akışı</p>
+            <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{{call .T "landing.showcase_feed"}}</p>
             <div class="space-y-2">
                 <div class="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3">
                     <span class="text-2xl">😊</span>
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-sm font-bold">@ahmet</p>
-                        <p class="truncate text-xs text-slate-500">Harika bir gündü!</p>
+                        <p class="truncate text-xs text-slate-500">{{call .T "landing.showcase_feed_note1"}}</p>
                     </div>
                     <span class="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold">8.2/10</span>
                 </div>
@@ -68,7 +68,7 @@
                     <span class="text-2xl">😐</span>
                     <div class="min-w-0 flex-1">
                         <p class="truncate text-sm font-bold">@elif</p>
-                        <p class="truncate text-xs text-slate-500">Sıradan bir gün.</p>
+                        <p class="truncate text-xs text-slate-500">{{call .T "landing.showcase_feed_note2"}}</p>
                     </div>
                     <span class="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold">5.5/10</span>
                 </div>

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emiryoneyler/mymood/internal/i18n"
 	"github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/repository"
 	"github.com/go-playground/validator/v10"
@@ -51,27 +52,31 @@ func safeRedirectTarget(next string) string {
 }
 
 func (h *AuthHandler) ShowRegister(c *fiber.Ctx) error {
-	return c.Render("pages/register", fiber.Map{}, "layouts/base")
+	return renderPage(c, "pages/register", fiber.Map{}, "layouts/base")
 }
 
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
+	lang := middleware.CurrentLang(c)
+
 	var form registerForm
 	if err := c.BodyParser(&form); err != nil {
-		return c.Status(fiber.StatusBadRequest).Render("pages/register", fiber.Map{
-			"Error": "Geçersiz form verisi.",
+		c.Status(fiber.StatusBadRequest)
+		return renderPage(c, "pages/register", fiber.Map{
+			"Error": i18n.T(lang, "register.error_invalid_form"),
 		}, "layouts/base")
 	}
 
 	if err := h.validate.Struct(form); err != nil {
-		message := "Lütfen tüm alanları doğru şekilde doldur (kullanıcı adı 3-30 karakter, sadece harf/rakam, boşluksuz; şifre en az 8 karakter)."
+		message := i18n.T(lang, "register.error_validation")
 		if fieldErrors, ok := err.(validator.ValidationErrors); ok {
 			for _, fe := range fieldErrors {
 				if fe.Field() == "PasswordConfirm" {
-					message = "Şifreler eşleşmiyor."
+					message = i18n.T(lang, "register.error_password_mismatch")
 				}
 			}
 		}
-		return c.Status(fiber.StatusBadRequest).Render("pages/register", fiber.Map{
+		c.Status(fiber.StatusBadRequest)
+		return renderPage(c, "pages/register", fiber.Map{
 			"Error":    message,
 			"Username": form.Username,
 			"Email":    form.Email,
@@ -85,8 +90,9 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 
 	user, err := h.users.Create(c.Context(), form.Username, form.Email, string(passwordHash))
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).Render("pages/register", fiber.Map{
-			"Error":    "Bu kullanıcı adı veya e-posta zaten kullanılıyor.",
+		c.Status(fiber.StatusBadRequest)
+		return renderPage(c, "pages/register", fiber.Map{
+			"Error":    i18n.T(lang, "register.error_taken"),
 			"Username": form.Username,
 			"Email":    form.Email,
 		}, "layouts/base")
@@ -100,23 +106,27 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 }
 
 func (h *AuthHandler) ShowLogin(c *fiber.Ctx) error {
-	return c.Render("pages/login", fiber.Map{
+	return renderPage(c, "pages/login", fiber.Map{
 		"Next":         c.Query("next"),
 		"AuthRequired": c.Query("reason") == "auth",
 	}, "layouts/base")
 }
 
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
+	lang := middleware.CurrentLang(c)
+
 	var form loginForm
 	if err := c.BodyParser(&form); err != nil {
-		return c.Status(fiber.StatusBadRequest).Render("pages/login", fiber.Map{
-			"Error": "Geçersiz form verisi.",
+		c.Status(fiber.StatusBadRequest)
+		return renderPage(c, "pages/login", fiber.Map{
+			"Error": i18n.T(lang, "login.error_invalid_form"),
 		}, "layouts/base")
 	}
 
 	if err := h.validate.Struct(form); err != nil {
-		return c.Status(fiber.StatusBadRequest).Render("pages/login", fiber.Map{
-			"Error": "E-posta ve şifre gereklidir.",
+		c.Status(fiber.StatusBadRequest)
+		return renderPage(c, "pages/login", fiber.Map{
+			"Error": i18n.T(lang, "login.error_required"),
 			"Email": form.Email,
 			"Next":  form.Next,
 		}, "layouts/base")
@@ -124,8 +134,9 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 
 	user, err := h.users.GetByEmail(c.Context(), form.Email)
 	if errors.Is(err, repository.ErrNotFound) {
-		return c.Status(fiber.StatusUnauthorized).Render("pages/login", fiber.Map{
-			"Error": "E-posta veya şifre yanlış.",
+		c.Status(fiber.StatusUnauthorized)
+		return renderPage(c, "pages/login", fiber.Map{
+			"Error": i18n.T(lang, "login.error_wrong"),
 			"Email": form.Email,
 			"Next":  form.Next,
 		}, "layouts/base")
@@ -135,8 +146,9 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(form.Password)); err != nil {
-		return c.Status(fiber.StatusUnauthorized).Render("pages/login", fiber.Map{
-			"Error": "E-posta veya şifre yanlış.",
+		c.Status(fiber.StatusUnauthorized)
+		return renderPage(c, "pages/login", fiber.Map{
+			"Error": i18n.T(lang, "login.error_wrong"),
 			"Email": form.Email,
 			"Next":  form.Next,
 		}, "layouts/base")

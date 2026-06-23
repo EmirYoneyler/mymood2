@@ -1,0 +1,177 @@
+package i18n
+
+// tr is the Turkish dictionary.
+var tr = map[string]string{
+	// nav
+	"nav.feed":     "Akış",
+	"nav.today":    "Bugün",
+	"nav.friends":  "Arkadaşlar",
+	"nav.profile":  "Profilim",
+	"nav.settings": "Ayarlar",
+	"nav.logout":   "Çıkış",
+
+	// meta
+	"meta.description": "Günlük mood'unu puanla, arkadaşlarının gününü takip et.",
+
+	// landing
+	"landing.login":               "Giriş Yap",
+	"landing.register":            "Kayıt Ol",
+	"landing.hero_line1":          "Gününü puanla.",
+	"landing.hero_line2":          "Arkadaşlarınla paylaş.",
+	"landing.hero_sub":            "Günde 30 saniye ayır, 1-10 arası (ondalıklı) bir puan ver, istersen kısa bir not ekle. Arkadaşların da gününü görsün, sen de onların.",
+	"landing.cta_register":        "Ücretsiz Kayıt Ol",
+	"landing.cta_login":           "Zaten hesabım var",
+	"landing.showcase_daily":      "Günlük Puanlama",
+	"landing.showcase_calendar":   "Renkli Takvim",
+	"landing.showcase_feed":       "Arkadaş Akışı",
+	"landing.showcase_feed_note1": "Harika bir gündü!",
+	"landing.showcase_feed_note2": "Sıradan bir gün.",
+
+	// login
+	"login.title":              "Giriş Yap",
+	"login.subtitle":           "Gününü puanlamaya devam et.",
+	"login.auth_required":      "Bu sayfayı görmek için önce giriş yapmalısın.",
+	"login.email":              "E-posta",
+	"login.password":           "Şifre",
+	"login.show":               "Göster",
+	"login.hide":               "Gizle",
+	"login.submit":             "Giriş Yap",
+	"login.no_account":         "Hesabın yok mu?",
+	"login.register_link":      "Kayıt ol",
+	"login.error_invalid_form": "Geçersiz form verisi.",
+	"login.error_required":     "E-posta ve şifre gereklidir.",
+	"login.error_wrong":        "E-posta veya şifre yanlış.",
+
+	// register
+	"register.title":                   "Kayıt Ol",
+	"register.subtitle":                "30 saniyede günün nasıl geçtiğini paylaş.",
+	"register.username":                "Kullanıcı Adı",
+	"register.username_hint":           "Sadece harf ve rakam, boşluk olmadan (örn. emiry)",
+	"register.username_pattern_title":  "Sadece harf ve rakam, boşluk veya özel karakter olmadan",
+	"register.email":                   "E-posta",
+	"register.password":                "Şifre",
+	"register.password_hint":           "En az 8 karakter",
+	"register.password_confirm":        "Şifre (tekrar)",
+	"register.submit":                  "Kayıt Ol",
+	"register.have_account":            "Hesabın var mı?",
+	"register.login_link":              "Giriş yap",
+	"register.error_invalid_form":      "Geçersiz form verisi.",
+	"register.error_validation":        "Lütfen tüm alanları doğru şekilde doldur (kullanıcı adı 3-30 karakter, sadece harf/rakam, boşluksuz; şifre en az 8 karakter).",
+	"register.error_password_mismatch": "Şifreler eşleşmiyor.",
+	"register.error_taken":             "Bu kullanıcı adı veya e-posta zaten kullanılıyor.",
+
+	// mood
+	"mood.title_today":        "Bugün nasılsın?",
+	"mood.title_other":        "%s nasıldı?",
+	"mood.subtitle":           "Puanını seç (ondalıklı olabilir, örn. 7.6), istersen kısa bir not bırak.",
+	"mood.rate_past_day":      "Geçmiş bir günü puanla",
+	"mood.note_label":         "Not (opsiyonel)",
+	"mood.note_placeholder":   "Günün nasıl geçti?",
+	"mood.save":               "Kaydet",
+	"mood.remove":             "Puanı Kaldır",
+	"mood.error_invalid_form": "Geçersiz form verisi.",
+	"mood.error_validation":   "Puan 1.0-10.0 arasında olmalı, not en fazla 280 karakter olabilir.",
+	"mood.error_save_failed":  "Mood kaydedilemedi, lütfen tekrar dene.",
+
+	// friends
+	"friends.title":              "Arkadaşlar",
+	"friends.search_placeholder": "Kullanıcı adı ara...",
+	"friends.search_button":      "Ara",
+	"friends.send_request":       "İstek Gönder",
+	"friends.no_results":         "Sonuç bulunamadı.",
+	"friends.pending_title":      "Bekleyen İstekler",
+	"friends.accept":             "Kabul Et",
+	"friends.reject":             "Reddet",
+	"friends.your_friends":       "Arkadaşların",
+	"friends.view_profile":       "Profili Gör",
+	"friends.remove_friend":      "Arkadaşlıktan Çık",
+	"friends.no_friends":         "Henüz arkadaşın yok. Yukarıdan kullanıcı adıyla ara.",
+
+	// feed
+	"feed.rated_today_q":      "Bugünü puanladın mı?",
+	"feed.rate_today":         "Bugünü Puanla",
+	"feed.your_friends":       "Arkadaşların",
+	"feed.manage_friends":     "Arkadaşları yönet →",
+	"feed.view_profile_stats": "Profilimi ve istatistiklerimi gör →",
+	"feed.title":              "Akış",
+	"feed.no_friends":         "Henüz arkadaşın yok.",
+	"feed.add_friend":         "Arkadaş ekle",
+	"feed.no_friends_suffix":  "ve akışın canlansın.",
+	"feed.no_entries":         "Arkadaşların henüz mood paylaşmamış.",
+
+	// profile
+	"profile.title_self":     "Profilim",
+	"profile.title_other":    "@%s Profili",
+	"profile.saved":          "Mood'un kaydedildi!",
+	"profile.removed":        "Puan kaldırıldı, o gün tekrar boş.",
+	"profile.empty_state":    "Henüz hiç puan vermedin. İlk gününü puanlayarak başla!",
+	"profile.rate_today":     "Bugünü Puanla",
+	"profile.all_time_avg":   "Tüm Zamanlar Ortalaması",
+	"profile.current_streak": "Güncel Streak",
+	"profile.longest_streak": "Rekor Streak",
+	"profile.total_entries":  "Toplam Giriş",
+	"profile.this_week":      "Bu Hafta",
+	"profile.this_month":     "Bu Ay",
+	"profile.this_year":      "Bu Yıl",
+	"profile.calendar_title": "%d Takvimi",
+	"profile.calendar_hint":  "Bir günü tıklayarak puan ekle/güncelle",
+	"profile.distribution":   "Dağılım",
+	"profile.summary_title":  "%d Özeti",
+	"profile.daily_average":  "Günlük Ortalama",
+	"profile.days_tracked":   "Takip Edilen Gün",
+	"profile.tracking_rate":  "Takip Oranı",
+	"profile.legend":         "Lejant",
+	"profile.empty_swatch":   "Boş",
+
+	// months
+	"months.back_to_profile":        "← Profilime dön",
+	"months.back_to_username":       "← @%s profiline dön",
+	"months.title_self":             "Aylık Ortalamalar",
+	"months.title_other":            "@%s - Aylık Ortalamalar",
+	"months.days_suffix":            "gün",
+	"months.no_entries_self":        "Henüz hiç mood girişin yok. ",
+	"months.rate_today_link":        "Bugünü puanla",
+	"months.no_entries_self_suffix": "ve burada görünsün.",
+	"months.no_entries_other":       "@%s henüz hiç mood girişi yapmamış.",
+
+	// years
+	"years.title_self":          "Yıllık Notlar",
+	"years.title_other":         "@%s - Yıllık Notlar",
+	"years.subtitle":            `Geçmiş bir yılı günlük girişlerden bağımsız, bütünsel olarak puanla (örn. "2024 harika bir yıldı, 8 veririm"). Bu yıl her zaman güncel girdilerinin ortalamasıdır.`,
+	"years.saved":               "Yıl notu kaydedildi!",
+	"years.removed":             "Yıl notu kaldırıldı.",
+	"years.current_year_suffix": "(bu yıl, otomatik)",
+	"years.score_placeholder":   "Puan",
+	"years.note_placeholder":    "Not (opsiyonel)",
+	"years.update":              "Güncelle",
+	"years.rate":                "Puan Ver",
+	"years.remove":              "Kaldır",
+
+	// settings
+	"settings.title":                  "Ayarlar",
+	"settings.account_info":           "Hesap Bilgileri",
+	"settings.username":               "Kullanıcı Adı",
+	"settings.email":                  "E-posta",
+	"settings.danger_zone":            "Tehlikeli Bölge",
+	"settings.danger_desc":            "Hesabını sildiğinde tüm mood geçmişin, notların ve arkadaşlıkların kalıcı olarak silinir. Bu işlem geri alınamaz.",
+	"settings.confirm_password_label": "Onaylamak için şifreni yaz",
+	"settings.delete_button":          "Hesabımı Kalıcı Olarak Sil",
+	"settings.delete_confirm_js":      "Hesabını ve tüm verilerini kalıcı olarak silmek istediğine emin misin?",
+	"settings.error_invalid_form":     "Geçersiz form verisi.",
+	"settings.error_wrong_password":   "Şifre yanlış, hesabın silinmedi.",
+
+	// error pages
+	"error.back_home":                 "Ana sayfaya dön",
+	"error.not_found_message":         "Bu sayfa bulunamadı.",
+	"error.too_many_requests_message": "Çok fazla deneme yaptın. Birkaç dakika sonra tekrar dene.",
+
+	// friend access
+	"friend_access.forbidden": "Bu profili görmek için arkadaş olmanız gerekiyor.",
+
+	// mood buckets
+	"bucket.excellent": "Mükemmel",
+	"bucket.great":     "Harika",
+	"bucket.good":      "İyi",
+	"bucket.low":       "Düşük",
+	"bucket.poor":      "Kötü",
+}

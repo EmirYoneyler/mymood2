@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/emiryoneyler/mymood/internal/i18n"
 	"github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/repository"
 	"github.com/gofiber/fiber/v2"
@@ -14,11 +15,6 @@ type MonthsHandler struct {
 
 func NewMonthsHandler(moods *repository.MoodRepository, friendships *repository.FriendshipRepository, users *repository.UserRepository) *MonthsHandler {
 	return &MonthsHandler{moods: moods, friendships: friendships, users: users}
-}
-
-var turkishMonthNames = []string{
-	"Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
-	"Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 }
 
 type monthRow struct {
@@ -50,6 +46,9 @@ func (h *MonthsHandler) ShowFriend(c *fiber.Ctx) error {
 // render lists every calendar month targetID has logged a mood in, newest
 // first, each linking back to that year's calendar on the profile page.
 func (h *MonthsHandler) render(c *fiber.Ctx, viewerID, targetID, username string) error {
+	lang := middleware.CurrentLang(c)
+	monthNames := i18n.MonthNames(lang)
+
 	summaries, err := h.moods.MonthlyBreakdown(c.Context(), targetID)
 	if err != nil {
 		return fiber.ErrInternalServerError
@@ -58,7 +57,7 @@ func (h *MonthsHandler) render(c *fiber.Ctx, viewerID, targetID, username string
 	rows := make([]monthRow, 0, len(summaries))
 	for _, s := range summaries {
 		rows = append(rows, monthRow{
-			Label:       turkishMonthNames[int(s.Month.Month())-1],
+			Label:       monthNames[int(s.Month.Month())-1],
 			Year:        s.Month.Year(),
 			AverageText: s.AverageText(),
 			Count:       s.Count,
@@ -70,7 +69,7 @@ func (h *MonthsHandler) render(c *fiber.Ctx, viewerID, targetID, username string
 		profileLink = "/profile/" + username
 	}
 
-	return c.Render("pages/months", withNav(c.Context(), h.friendships, viewerID, fiber.Map{
+	return renderPage(c, "pages/months", withNav(c.Context(), h.friendships, viewerID, fiber.Map{
 		"Months":      rows,
 		"Username":    username,
 		"ProfileLink": profileLink,

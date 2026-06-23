@@ -50,7 +50,7 @@ func (h *FriendHandler) ShowFriends(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Render("pages/friends", withNav(c.Context(), h.friendships, userID, fiber.Map{
+	return renderPage(c, "pages/friends", withNav(c.Context(), h.friendships, userID, fiber.Map{
 		"Friends": friends,
 		"Pending": pending,
 		"Query":   query,
