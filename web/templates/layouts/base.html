@@ -2,9 +2,9 @@
 <html lang="{{.CurrentLang}}">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mymood</title>
-     <!-- Google tag (gtag.js) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{{with .TitleKey}}{{call $.T .}} · {{end}}mymood</title>
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-VQXKP99WY7"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
@@ -16,57 +16,52 @@
     <meta property="og:title" content="mymood">
     <meta property="og:description" content="{{call .T "meta.description"}}">
     <meta property="og:type" content="website">
+    <meta name="theme-color" content="#f6f6f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0b0b0d" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-title" content="mymood">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="format-detection" content="telephone=no">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+    <link rel="manifest" href="/static/manifest.webmanifest">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
-                    colors: {
-                        base: '#0F0F14',
-                        surface: '#16161F',
-                    },
-                    backgroundImage: {
-                        'brand-gradient': 'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
-                    },
-                },
-            },
-        };
-    </script>
-    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-    <link rel="stylesheet" href="/static/css/app.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/app.css?v=4">
+    <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+    <script src="/static/js/app.js?v=4" defer></script>
 </head>
-<body hx-boost="true" class="min-h-screen bg-base text-slate-100 font-sans antialiased">
-    <div hx-boost="false" class="fixed right-3 top-3 z-[60] flex gap-1 text-xs">
-        <a href="/lang/en" class="rounded px-2 py-1 {{if eq .CurrentLang "en"}}bg-white/20 font-semibold{{else}}bg-white/5 text-slate-400 hover:bg-white/10{{end}}">EN</a>
-        <a href="/lang/tr" class="rounded px-2 py-1 {{if eq .CurrentLang "tr"}}bg-white/20 font-semibold{{else}}bg-white/5 text-slate-400 hover:bg-white/10{{end}}">TR</a>
-    </div>
+<body hx-boost="true">
+<div class="shell{{if .ShowNav}} shell--nav{{end}}">
     {{if .ShowNav}}
-    <nav class="sticky top-0 z-50 border-b border-white/10 bg-base/80 backdrop-blur-md">
-        <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-            <a href="/feed" class="bg-brand-gradient bg-clip-text text-xl font-extrabold text-transparent">mymood</a>
-            <div class="flex items-center gap-1 pr-16 sm:gap-2">
-                <a href="/feed" class="nav-link">{{call .T "nav.feed"}}</a>
-                <a href="/mood" class="nav-link">{{call .T "nav.today"}}</a>
-                <a href="/friends" class="nav-link relative">
-                    {{call .T "nav.friends"}}
-                    {{if .PendingCount}}<span class="badge">{{.PendingCount}}</span>{{end}}
-                </a>
-                <a href="/profile" class="nav-link">{{call .T "nav.profile"}}</a>
-                <a href="/settings" class="nav-link">{{call .T "nav.settings"}}</a>
-                <form method="POST" action="/logout" class="inline">
-                    <button type="submit" class="nav-link">{{call .T "nav.logout"}}</button>
-                </form>
+    <header class="topbar">
+        <div class="topbar__inner">
+            <a href="/mood" class="brand">{{template "brand-mark"}}<span>mymood</span></a>
+            <nav class="topnav" aria-label="{{call .T "nav.label"}}">
+                <a href="/mood"{{if eq .Nav "today"}} aria-current="page"{{end}}>{{call .T "nav.today"}}</a>
+                <a href="/feed"{{if eq .Nav "feed"}} aria-current="page"{{end}}>{{call .T "nav.feed"}}</a>
+                <a href="/friends"{{if eq .Nav "friends"}} aria-current="page"{{end}}>{{call .T "nav.friends"}}{{if .PendingCount}} <span class="count-badge">{{.PendingCount}}</span>{{end}}</a>
+                <a href="/profile"{{if eq .Nav "profile"}} aria-current="page"{{end}}>{{call .T "nav.profile"}}</a>
+            </nav>
+            <div class="topbar__end">
+                <a href="/settings" class="icon-btn"{{if eq .Nav "settings"}} aria-current="page"{{end}} aria-label="{{call .T "nav.settings"}}" title="{{call .T "nav.settings"}}">{{template "icon-settings"}}</a>
             </div>
         </div>
+    </header>
+    {{end}}
+
+    <main class="page-enter">
+        {{embed}}
+    </main>
+
+    {{if .ShowNav}}
+    <nav class="tabbar" aria-label="{{call .T "nav.label"}}">
+        <a href="/mood"{{if eq .Nav "today"}} aria-current="page"{{end}}>{{template "icon-today"}}<span>{{call .T "nav.today"}}</span></a>
+        <a href="/feed"{{if eq .Nav "feed"}} aria-current="page"{{end}}>{{template "icon-feed"}}<span>{{call .T "nav.feed"}}</span></a>
+        <a href="/friends"{{if eq .Nav "friends"}} aria-current="page"{{end}}>{{template "icon-friends"}}<span>{{call .T "nav.friends"}}</span>{{if .PendingCount}}<span class="dot-badge">{{.PendingCount}}</span>{{end}}</a>
+        <a href="/profile"{{if eq .Nav "profile"}} aria-current="page"{{end}}>{{template "icon-profile"}}<span>{{call .T "nav.profile"}}</span></a>
     </nav>
     {{end}}
-    <div id="htmx-content" class="mx-auto max-w-5xl px-4 py-8">
-        {{embed}}
-    </div>
+</div>
 </body>
 </html>

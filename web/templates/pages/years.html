@@ -1,50 +1,77 @@
-<main class="space-y-6">
-    <div class="flex items-center gap-3">
-        <a href="{{.ProfileLink}}" class="text-sm text-fuchsia-400 hover:text-fuchsia-300">{{if .Username}}{{call .T "months.back_to_username" .Username}}{{else}}{{call .T "months.back_to_profile"}}{{end}}</a>
+<div class="container">
+    <a href="{{.ProfileLink}}" class="back-link">{{template "icon-chevron-left"}}{{if .Username}}{{.Username}}{{else}}{{call .T "nav.profile"}}{{end}}</a>
+    <div class="page-head">
+        <h1 class="page-title">{{call .T "years.title"}}</h1>
+        <p class="page-sub">{{if .Editable}}{{call .T "years.subtitle"}}{{else}}{{.Username}}{{end}}</p>
     </div>
-    <div>
-        <h1 class="text-2xl font-extrabold">{{if .Username}}{{call .T "years.title_other" .Username}}{{else}}{{call .T "years.title_self"}}{{end}}</h1>
-        {{if .Editable}}
-        <p class="mt-1 text-sm text-slate-400">{{call .T "years.subtitle"}}</p>
+
+    <div class="stack-lg">
+        {{if .Saved}}
+        <div class="alert alert-success" role="status" data-autohide>{{template "icon-check"}}<span>{{call .T "years.saved"}}</span></div>
         {{end}}
-    </div>
+        {{if .Removed}}
+        <div class="alert alert-info" role="status" data-autohide>{{template "icon-check"}}<span>{{call .T "years.removed"}}</span></div>
+        {{end}}
 
-    {{if .Saved}}
-    <p class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{{call .T "years.saved"}}</p>
-    {{end}}
-    {{if .Removed}}
-    <p class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">{{call .T "years.removed"}}</p>
-    {{end}}
-
-    <section class="glass-card divide-y divide-white/10 p-2">
-        {{range .Years}}
-        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <a href="{{$.ProfileLink}}?year={{.Year}}" class="font-medium hover:text-fuchsia-300">{{.Year}}{{if .IsCurrent}} <span class="text-xs text-slate-500">{{call $.T "years.current_year_suffix"}}</span>{{end}}</a>
-
-            {{if .IsCurrent}}
-            <span class="font-bold text-fuchsia-300">{{.ScoreText}}</span>
-            {{else if $.Editable}}
-            <div class="flex items-center gap-2">
-                <span class="font-bold {{if .HasRating}}text-cyan-300{{else}}text-slate-500{{end}}">{{.ScoreText}}</span>
-                <form method="POST" action="/profile/year-rating" class="flex items-center gap-2">
-                    <input type="hidden" name="year" value="{{.Year}}">
-                    <input type="number" name="score" min="1" max="10" step="0.1" required placeholder="{{call $.T "years.score_placeholder"}}"
-                        class="w-20 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-center text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
-                    <input type="text" name="note" maxlength="280" value="{{.NoteText}}" placeholder="{{call $.T "years.note_placeholder"}}"
-                        class="hidden w-40 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30 sm:block">
-                    <button type="submit" class="rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95">{{if .HasRating}}{{call $.T "years.update"}}{{else}}{{call $.T "years.rate"}}{{end}}</button>
-                </form>
-                {{if .HasRating}}
-                <form method="POST" action="/profile/year-rating/delete">
-                    <input type="hidden" name="year" value="{{.Year}}">
-                    <button type="submit" class="rounded-lg border border-white/15 px-2 py-1.5 text-xs font-semibold text-slate-400 transition hover:bg-white/10 hover:text-red-300 active:scale-95">{{call $.T "years.remove"}}</button>
-                </form>
-                {{end}}
-            </div>
+        <ul class="card card--flush list">
+            {{range .Years}}
+            {{if or .IsCurrent (not $.Editable)}}
+            <li class="list-row">
+                <span class="list-row__main">
+                    <span class="list-row__title num">{{.Year}}</span>
+                    {{if .IsCurrent}}<span class="list-row__meta">{{call $.T "years.current_note"}}</span>{{else if .NoteText}}<span class="list-row__meta">{{.NoteText}}</span>{{end}}
+                </span>
+                {{if .HasScore}}<span class="score" style="background-color:{{scoreColor .Score}}">{{.ScoreText}}</span>{{else}}<span class="score score--empty">—</span>{{end}}
+            </li>
             {{else}}
-            <span class="font-bold {{if .HasRating}}text-cyan-300{{else}}text-slate-500{{end}}">{{.ScoreText}}</span>
+            <li>
+                <details class="disclosure">
+                    <summary class="list-row">
+                        <span class="list-row__main">
+                            <span class="list-row__title num">{{.Year}}</span>
+                            <span class="list-row__meta">{{if .NoteText}}{{.NoteText}}{{else}}{{call $.T "years.tap_to_edit"}}{{end}}</span>
+                        </span>
+                        <span class="score" style="background-color:{{scoreColor .Score}}">{{.ScoreText}}</span>
+                        <span class="chev">{{template "icon-chevron-right"}}</span>
+                    </summary>
+                    <div class="disclosure__panel">
+                        <form method="POST" action="/profile/year-rating" class="year-form">
+                            <input type="hidden" name="year" value="{{.Year}}">
+                            <input type="number" name="score" class="input" min="1" max="10" step="0.1" inputmode="decimal" required
+                                value="{{.ScoreText}}" aria-label="{{call $.T "years.score_label"}}">
+                            <input type="text" name="note" class="input" maxlength="280" value="{{.NoteText}}"
+                                placeholder="{{call $.T "years.note_placeholder"}}" aria-label="{{call $.T "years.note_placeholder"}}">
+                            <div class="year-form__actions">
+                                <button type="submit" form="removeYear{{.Year}}" class="btn btn-danger-ghost btn-sm">{{call $.T "years.remove"}}</button>
+                                <button type="submit" class="btn btn-primary btn-sm">{{call $.T "years.update"}}</button>
+                            </div>
+                        </form>
+                        <form id="removeYear{{.Year}}" method="POST" action="/profile/year-rating/delete" data-confirm="{{call $.T "years.remove_confirm" .Year}}" hidden>
+                            <input type="hidden" name="year" value="{{.Year}}">
+                        </form>
+                    </div>
+                </details>
+            </li>
             {{end}}
-        </div>
+            {{end}}
+        </ul>
+
+        {{if and .Editable .UnratedYears}}
+        <section>
+            <h2 class="section-label">{{call .T "years.rate_title"}}</h2>
+            <form method="POST" action="/profile/year-rating" class="card card__body year-form">
+                <select name="year" class="select full" aria-label="{{call .T "years.year_label"}}">
+                    {{range .UnratedYears}}<option value="{{.}}">{{.}}</option>{{end}}
+                </select>
+                <input type="number" name="score" class="input" min="1" max="10" step="0.1" inputmode="decimal" required
+                    placeholder="{{call .T "years.score_placeholder"}}" aria-label="{{call .T "years.score_label"}}">
+                <input type="text" name="note" class="input" maxlength="280"
+                    placeholder="{{call .T "years.note_placeholder"}}" aria-label="{{call .T "years.note_placeholder"}}">
+                <div class="year-form__actions">
+                    <button type="submit" class="btn btn-primary btn-sm">{{call .T "years.rate"}}</button>
+                </div>
+            </form>
+        </section>
         {{end}}
-    </section>
-</main>
+    </div>
+</div>

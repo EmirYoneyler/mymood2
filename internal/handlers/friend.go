@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"net/url"
 
 	"github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/models"
@@ -50,11 +51,12 @@ func (h *FriendHandler) ShowFriends(c *fiber.Ctx) error {
 		}
 	}
 
-	return renderPage(c, "pages/friends", withNav(c.Context(), h.friendships, userID, fiber.Map{
+	return renderPage(c, "pages/friends", withNav(c, h.friendships, userID, "friends", fiber.Map{
 		"Friends": friends,
 		"Pending": pending,
 		"Query":   query,
 		"Results": results,
+		"Sent":    c.Query("sent") == "1",
 	}), "layouts/base")
 }
 
@@ -68,7 +70,7 @@ func (h *FriendHandler) SendRequest(c *fiber.Ctx) error {
 
 	target, err := h.users.GetByUsername(c.Context(), form.Username)
 	if errors.Is(err, repository.ErrNotFound) {
-		return c.Redirect("/friends?q=" + form.Username)
+		return c.Redirect("/friends?q=" + url.QueryEscape(form.Username))
 	}
 	if err != nil {
 		return fiber.ErrInternalServerError
@@ -88,6 +90,7 @@ func (h *FriendHandler) SendRequest(c *fiber.Ctx) error {
 		if _, err := h.friendships.Create(c.Context(), userID, target.ID); err != nil {
 			return fiber.ErrInternalServerError
 		}
+		return c.Redirect("/friends?sent=1")
 	case existing.Status == models.FriendshipAccepted:
 		// already friends, nothing to do
 	case existing.RequesterID == target.ID:

@@ -1,0 +1,24 @@
+{{define "month-calendar"}}
+<div class="mcal">
+    {{range .Weekdays}}<div class="mcal__wd">{{.}}</div>{{end}}
+    {{$interactive := .Interactive}}
+    {{range .Days}}
+    {{if .Blank}}
+    <div class="mcal__day mcal__day--blank" aria-hidden="true"></div>
+    {{else}}
+    {{$cls := "mcal__day"}}
+    {{if .HasEntry}}{{$cls = printf "%s mcal__day--has" $cls}}{{end}}
+    {{if .Future}}{{$cls = printf "%s mcal__day--future" $cls}}{{end}}
+    {{if .IsToday}}{{$cls = printf "%s mcal__day--today" $cls}}{{end}}
+    {{if .Selected}}{{$cls = printf "%s mcal__day--selected" $cls}}{{end}}
+    {{if and $interactive (not .Future)}}
+    <a href="/mood?date={{.DateParam}}" class="{{$cls}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}{{if .Selected}} aria-current="date"{{end}}>
+    {{else}}
+    <div class="{{$cls}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}>
+    {{end}}
+        {{if .HasEntry}}<span class="mcal__d">{{.Day}}</span><span class="mcal__s">{{.ScoreText}}</span>{{else}}{{.Day}}{{end}}
+    {{if and $interactive (not .Future)}}</a>{{else}}</div>{{end}}
+    {{end}}
+    {{end}}
+</div>
+{{end}}

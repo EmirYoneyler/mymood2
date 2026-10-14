@@ -1,72 +1,93 @@
-<main class="space-y-6">
-    <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-extrabold">{{call .T "friends.title"}}</h1>
-        {{if .Pending}}<span class="badge">{{len .Pending}}</span>{{end}}
+<div class="container">
+    <div class="page-head">
+        <h1 class="page-title">{{call .T "friends.title"}}</h1>
     </div>
 
-    <section class="glass-card p-6">
-        <form method="GET" action="/friends" class="flex gap-2">
-            <input type="text" name="q" placeholder="{{call .T "friends.search_placeholder"}}" value="{{.Query}}"
-                class="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
-            <button type="submit" class="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 active:scale-95">{{call .T "friends.search_button"}}</button>
-        </form>
-
-        {{if .Results}}
-        <ul class="mt-4 divide-y divide-white/10">
-            {{range .Results}}
-            <li class="flex items-center justify-between py-3">
-                <span class="font-medium">@{{.Username}}</span>
-                <form method="POST" action="/friends/request">
-                    <input type="hidden" name="username" value="{{.Username}}">
-                    <button type="submit" class="rounded-lg border border-fuchsia-400/40 px-3 py-1.5 text-xs font-semibold text-fuchsia-300 transition hover:bg-fuchsia-400/10 active:scale-95">{{call $.T "friends.send_request"}}</button>
-                </form>
-            </li>
-            {{end}}
-        </ul>
-        {{else if .Query}}
-        <p class="mt-4 text-sm text-slate-400">{{call .T "friends.no_results"}}</p>
+    <div class="stack-lg">
+        {{if .Sent}}
+        <div class="alert alert-success" role="status" data-autohide>{{template "icon-check"}}<span>{{call .T "friends.request_sent"}}</span></div>
         {{end}}
-    </section>
 
-    {{if .Pending}}
-    <section class="glass-card p-6">
-        <h2 class="mb-3 text-lg font-bold">{{call .T "friends.pending_title"}}</h2>
-        <ul class="divide-y divide-white/10">
-            {{range .Pending}}
-            <li class="flex items-center justify-between py-3">
-                <span class="font-medium">@{{.From.Username}}</span>
-                <div class="flex gap-2">
-                    <form method="POST" action="/friends/{{.FriendshipID}}/accept">
-                        <button type="submit" class="rounded-lg bg-brand-gradient px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90 active:scale-95">{{call $.T "friends.accept"}}</button>
-                    </form>
-                    <form method="POST" action="/friends/{{.FriendshipID}}/reject">
-                        <button type="submit" class="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-white/10 active:scale-95">{{call $.T "friends.reject"}}</button>
-                    </form>
+        <section>
+            <form method="GET" action="/friends" class="inline-form" role="search">
+                <div class="input-wrap input-wrap--icon">
+                    <span class="input-wrap__icon">{{template "icon-search"}}</span>
+                    <input type="search" name="q" class="input" value="{{.Query}}" placeholder="{{call .T "friends.search_placeholder"}}"
+                        aria-label="{{call .T "friends.search_placeholder"}}" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="search">
                 </div>
-            </li>
-            {{end}}
-        </ul>
-    </section>
-    {{end}}
+                <button type="submit" class="btn btn-secondary">{{call .T "friends.search_button"}}</button>
+            </form>
 
-    <section class="glass-card p-6">
-        <h2 class="mb-3 text-lg font-bold">{{call .T "friends.your_friends"}}</h2>
-        {{if .Friends}}
-        <ul class="divide-y divide-white/10">
-            {{range .Friends}}
-            <li class="flex items-center justify-between py-3">
-                <a href="/profile/{{.User.Username}}" class="font-medium hover:text-fuchsia-300">@{{.User.Username}}</a>
-                <div class="flex gap-2">
-                    <a href="/profile/{{.User.Username}}" class="rounded-lg border border-fuchsia-400/40 px-3 py-1.5 text-xs font-semibold text-fuchsia-300 transition hover:bg-fuchsia-400/10 active:scale-95">{{call $.T "friends.view_profile"}}</a>
-                    <form method="POST" action="/friends/{{.FriendshipID}}/remove">
-                        <button type="submit" class="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-slate-400 transition hover:bg-white/10 hover:text-red-300 active:scale-95">{{call $.T "friends.remove_friend"}}</button>
-                    </form>
-                </div>
-            </li>
+            {{if .Query}}
+            <div class="card card--flush search-results">
+                {{if .Results}}
+                <ul class="list">
+                    {{range .Results}}
+                    <li class="list-row">
+                        <span class="avatar" data-tone="{{avatarTone .Username}}" aria-hidden="true">{{initial .Username}}</span>
+                        <div class="list-row__main"><span class="list-row__title">{{.Username}}</span></div>
+                        <form method="POST" action="/friends/request">
+                            <input type="hidden" name="username" value="{{.Username}}">
+                            <button type="submit" class="btn btn-secondary btn-sm">{{call $.T "friends.send_request"}}</button>
+                        </form>
+                    </li>
+                    {{end}}
+                </ul>
+                {{else}}
+                <p class="empty empty__text">{{call .T "friends.no_results" .Query}}</p>
+                {{end}}
+            </div>
             {{end}}
-        </ul>
-        {{else}}
-        <p class="text-sm text-slate-400">{{call .T "friends.no_friends"}}</p>
+        </section>
+
+        {{if .Pending}}
+        <section>
+            <h2 class="section-label">{{call .T "friends.pending_title"}} · {{len .Pending}}</h2>
+            <ul class="card card--flush list">
+                {{range .Pending}}
+                <li class="list-row">
+                    <span class="avatar" data-tone="{{avatarTone .From.Username}}" aria-hidden="true">{{initial .From.Username}}</span>
+                    <div class="list-row__main">
+                        <span class="list-row__title">{{.From.Username}}</span>
+                        <span class="list-row__meta">{{call $.T "friends.wants_to_connect"}}</span>
+                    </div>
+                    <div class="list-row__actions">
+                        <form method="POST" action="/friends/{{.FriendshipID}}/reject">
+                            <button type="submit" class="btn btn-ghost btn-sm">{{call $.T "friends.reject"}}</button>
+                        </form>
+                        <form method="POST" action="/friends/{{.FriendshipID}}/accept">
+                            <button type="submit" class="btn btn-primary btn-sm">{{call $.T "friends.accept"}}</button>
+                        </form>
+                    </div>
+                </li>
+                {{end}}
+            </ul>
+        </section>
         {{end}}
-    </section>
-</main>
+
+        <section>
+            <h2 class="section-label">{{call .T "friends.your_friends"}}{{if .Friends}} · {{len .Friends}}{{end}}</h2>
+            {{if .Friends}}
+            <ul class="card card--flush list">
+                {{range .Friends}}
+                <li class="list-row">
+                    <a href="/profile/{{.User.Username}}" class="avatar" data-tone="{{avatarTone .User.Username}}" aria-hidden="true" tabindex="-1">{{initial .User.Username}}</a>
+                    <a href="/profile/{{.User.Username}}" class="list-row__main">
+                        <span class="list-row__title">{{.User.Username}}</span>
+                        <span class="list-row__meta">{{call $.T "friends.view_profile"}}</span>
+                    </a>
+                    <form method="POST" action="/friends/{{.FriendshipID}}/remove" data-confirm="{{call $.T "friends.remove_confirm" .User.Username}}">
+                        <button type="submit" class="btn btn-ghost btn-sm">{{call $.T "friends.remove_friend"}}</button>
+                    </form>
+                </li>
+                {{end}}
+            </ul>
+            {{else}}
+            <div class="card empty">
+                <p class="empty__title">{{call .T "friends.no_friends_title"}}</p>
+                <p class="empty__text">{{call .T "friends.no_friends_text"}}</p>
+            </div>
+            {{end}}
+        </section>
+    </div>
+</div>

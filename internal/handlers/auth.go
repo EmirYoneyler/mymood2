@@ -46,7 +46,7 @@ type loginForm struct {
 // elsewhere after login.
 func safeRedirectTarget(next string) string {
 	if next == "" || !strings.HasPrefix(next, "/") || strings.HasPrefix(next, "//") {
-		return "/feed"
+		return "/mood"
 	}
 	return next
 }
@@ -102,7 +102,7 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	return c.Redirect("/feed")
+	return c.Redirect("/mood")
 }
 
 func (h *AuthHandler) ShowLogin(c *fiber.Ctx) error {

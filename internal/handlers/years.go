@@ -17,16 +17,12 @@ func NewYearsHandler(moods *repository.MoodRepository, yearRatings *repository.Y
 	return &YearsHandler{moods: moods, yearRatings: yearRatings, friendships: friendships, users: users}
 }
 
-// defaultYearsBack is how far back the years list goes by default. It's
-// extended further if an older rating already exists, so a year you already
-// rated never silently falls off the list.
-const defaultYearsBack = 30
-
-type yearRow struct {
+type yearListRow struct {
 	Year      int
 	IsCurrent bool
+	Score     float64
 	ScoreText string
-	HasRating bool
+	HasScore  bool
 	NoteText  string
 }
 
@@ -49,11 +45,10 @@ func (h *YearsHandler) ShowFriend(c *fiber.Ctx) error {
 	return h.render(c, viewerID, target.ID, target.Username, false)
 }
 
-// render lists every year from the current one back through a reasonable
-// history, current year showing the live daily average (read-only), and past
-// years showing/accepting a single holistic rating entered directly - useful
-// for years never logged day-by-day but still remembered well. Editing is
-// only available when viewing your own years.
+// render lists the current year (its live daily average, read-only) followed
+// by every past year that has a holistic rating - useful for years never
+// logged day-by-day but still remembered well. When viewing your own years,
+// each rating can be edited or removed, and any past year can be rated.
 func (h *YearsHandler) render(c *fiber.Ctx, viewerID, targetID, username string, editable bool) error {
 	ctx := c.Context()
 	today := todayDate()
@@ -64,37 +59,41 @@ func (h *YearsHandler) render(c *fiber.Ctx, viewerID, targetID, username string,
 		return fiber.ErrInternalServerError
 	}
 
-	ratingByYear := make(map[int]string, len(ratings))
-	noteByYear := make(map[int]string, len(ratings))
-	minYear := currentYear - defaultYearsBack
-	for _, r := range ratings {
-		ratingByYear[r.Year] = r.ScoreText()
-		noteByYear[r.Year] = r.NoteText()
-		if r.Year < minYear {
-			minYear = r.Year
-		}
-	}
-
 	avg, count, err := h.moods.StatsBetween(ctx, targetID, startOfYear(today), today)
 	if err != nil {
 		return fiber.ErrInternalServerError
 	}
 
-	rows := make([]yearRow, 0, currentYear-minYear+1)
-	for year := currentYear; year >= minYear; year-- {
-		if year == currentYear {
-			rows = append(rows, yearRow{Year: year, IsCurrent: true, ScoreText: formatAverage(avg, count)})
+	rows := make([]yearListRow, 0, len(ratings)+1)
+	rows = append(rows, yearListRow{
+		Year:      currentYear,
+		IsCurrent: true,
+		Score:     avg,
+		ScoreText: formatAverage(avg, count),
+		HasScore:  count > 0,
+	})
+
+	rated := make(map[int]bool, len(ratings))
+	for _, r := range ratings { // already newest year first
+		rated[r.Year] = true
+		if r.Year >= currentYear {
 			continue
 		}
+		rows = append(rows, yearListRow{
+			Year:      r.Year,
+			Score:     r.Score,
+			ScoreText: r.ScoreText(),
+			HasScore:  true,
+			NoteText:  r.NoteText(),
+		})
+	}
 
-		score, hasRating := ratingByYear[year]
-		row := yearRow{Year: year, ScoreText: "—"}
-		if hasRating {
-			row.ScoreText = score
-			row.HasRating = true
-			row.NoteText = noteByYear[year]
+	// Past years that can still be rated, for the "rate a year" picker.
+	var unrated []int
+	for year := currentYear - 1; year >= currentYear-maxYearsBack; year-- {
+		if !rated[year] {
+			unrated = append(unrated, year)
 		}
-		rows = append(rows, row)
 	}
 
 	profileLink := "/profile"
@@ -102,12 +101,14 @@ func (h *YearsHandler) render(c *fiber.Ctx, viewerID, targetID, username string,
 		profileLink = "/profile/" + username
 	}
 
-	return renderPage(c, "pages/years", withNav(ctx, h.friendships, viewerID, fiber.Map{
-		"Years":       rows,
-		"Editable":    editable,
-		"Username":    username,
-		"ProfileLink": profileLink,
-		"Saved":       c.Query("saved") == "1",
-		"Removed":     c.Query("removed") == "1",
+	return renderPage(c, "pages/years", withNav(c, h.friendships, viewerID, "profile", fiber.Map{
+		"Years":        rows,
+		"UnratedYears": unrated,
+		"Editable":     editable,
+		"Username":     username,
+		"ProfileLink":  profileLink,
+		"Saved":        c.Query("saved") == "1",
+		"Removed":      c.Query("removed") == "1",
+		"TitleKey":     "years.title",
 	}), "layouts/base")
 }

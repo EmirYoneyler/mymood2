@@ -8,7 +8,7 @@ Kullanıcıların günlerine 1-10 arası puan verdiği, arkadaş ekleyip onları
 - **Veritabanı:** PostgreSQL ([Neon.tech](https://neon.tech) ücretsiz katman)
 - **DB Erişimi:** `pgx/v5` ile el yazımı, parametreli SQL sorguları (ORM yok)
 - **Migration:** [golang-migrate](https://github.com/golang-migrate/migrate) — SQL dosyaları binary'ye `go:embed` ile gömülü, uygulama açılışında otomatik çalışır
-- **Frontend:** Go `html/template` + [HTMX](https://htmx.org/) + [Tailwind CSS](https://tailwindcss.com/) (Play CDN)
+- **Frontend:** Go `html/template` + [HTMX](https://htmx.org/) (hx-boost) + el yazımı CSS (`web/static/css/app.css`) — build adımı yok, mobil öncelikli, açık/koyu tema cihaz ayarını izler
 - **Auth:** JWT (`golang-jwt/jwt/v5`) + `bcrypt`, HttpOnly + Secure + SameSite=Strict cookie tabanlı session
 - **Validation:** `go-playground/validator`
 
@@ -27,8 +27,8 @@ mymood/
 │   ├── middleware/        # JWT auth middleware, premium gate (Faz 2 için hazır)
 │   └── repository/        # parametreli SQL sorguları
 ├── web/
-│   ├── templates/      # layouts + pages
-│   └── static/css       # app.css (Tailwind ile birlikte özel stiller)
+│   ├── templates/      # layouts + pages + partials (ikonlar, ay takvimi)
+│   └── static/         # css/app.css (tasarım sistemi), js/app.js (küçük iyileştirmeler), ikonlar, manifest
 ├── migrations/         # SQL migration dosyaları (embed)
 ├── Dockerfile
 └── .env.example
@@ -60,8 +60,11 @@ mymood/
 ```bash
 go build ./...
 go vet ./...
+go test ./...
 gofmt -l .
 ```
+
+`go test ./internal/i18n` her iki dilin aynı anahtarlara sahip olduğunu ve şablonlarda kullanılan her metin anahtarının çevrildiğini kontrol eder.
 
 ## Deployment (ücretsiz katman)
 

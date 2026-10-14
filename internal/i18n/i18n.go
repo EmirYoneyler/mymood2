@@ -21,25 +21,47 @@ func Supported(lang string) bool {
 // via {{call .T "some.key"}} or {{call .T "some.key" arg1 arg2}}. Keys
 // missing from lang fall back to the default dictionary, then to the raw key
 // itself (so a missing translation is visible rather than silently blank).
+//
+// When the last argument is the int 1 and a "<key>.one" entry exists, that
+// singular form is used instead ("1 day" rather than "1 days"). Languages
+// without a singular form (Turkish) simply don't define ".one" keys.
 func Translator(lang string) func(string, ...any) string {
 	if !Supported(lang) {
 		lang = Default
 	}
 	dict := dictionaries[lang]
 
+	lookup := func(key string) (string, bool) {
+		if format, ok := dict[key]; ok {
+			return format, true
+		}
+		format, ok := dictionaries[Default][key]
+		return format, ok
+	}
+
 	return func(key string, args ...any) string {
-		format, ok := dict[key]
-		if !ok {
-			format, ok = dictionaries[Default][key]
-			if !ok {
-				return key
+		if n, ok := lastInt(args); ok && n == 1 {
+			if format, ok := dict[key+".one"]; ok {
+				return fmt.Sprintf(format, args...)
 			}
+		}
+		format, ok := lookup(key)
+		if !ok {
+			return key
 		}
 		if len(args) == 0 {
 			return format
 		}
 		return fmt.Sprintf(format, args...)
 	}
+}
+
+func lastInt(args []any) (int, bool) {
+	if len(args) == 0 {
+		return 0, false
+	}
+	n, ok := args[len(args)-1].(int)
+	return n, ok
 }
 
 // T is a convenience one-shot translation, for Go-side messages (handler
