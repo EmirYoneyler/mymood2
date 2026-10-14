@@ -12,11 +12,12 @@
     {{if .IsToday}}{{$cls = printf "%s mcal__day--today" $cls}}{{end}}
     {{if .Selected}}{{$cls = printf "%s mcal__day--selected" $cls}}{{end}}
     {{if and $interactive (not .Future)}}
-    <a href="/mood?date={{.DateParam}}" class="{{$cls}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}{{if .Selected}} aria-current="date"{{end}}>
+    <a href="/mood?date={{.DateParam}}" class="{{$cls}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}{{if .Selected}} aria-current="date"{{end}}{{with .Title}} title="{{.}}"{{end}}>
     {{else}}
     <div class="{{$cls}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}>
     {{end}}
         {{if .HasEntry}}<span class="mcal__d">{{.Day}}</span><span class="mcal__s">{{.ScoreText}}</span>{{else}}{{.Day}}{{end}}
+        {{if .HasNote}}<span class="mcal__note">{{template "icon-note"}}<span class="sr-only">{{.Title}}</span></span>{{end}}
     {{if and $interactive (not .Future)}}</a>{{else}}</div>{{end}}
     {{end}}
     {{end}}

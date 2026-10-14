@@ -25,7 +25,7 @@
     --shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
     --shadow-md: 0 4px 16px rgba(16, 24, 40, 0.08);
 
-    --mood-gradient: linear-gradient(90deg, #e5484d 0%, #f76b15 25%, #ffc53d 50%, #46a758 75%, #12a594 100%);
+    --mood-gradient: linear-gradient(90deg, #ff3b30 0%, #ff8c1a 25%, #ffd60a 50%, #a3e635 62.2%, #22c55e 75%, #06d6c7 100%);
     --on-mood: #141414;
 
     --radius: 14px;
@@ -492,6 +492,8 @@ svg { display: block; flex: none; }
 }
 
 .card__foot--spaced { padding-top: 14px; }
+.card__foot { flex-wrap: wrap; row-gap: 8px; }
+.nowrap { white-space: nowrap; }
 
 .stack { display: grid; gap: 16px; }
 .stack-lg { display: grid; gap: 24px; }
@@ -893,7 +895,20 @@ a.mcal__day:active { transform: scale(0.96); }
     letter-spacing: -0.02em;
 }
 
+/* Speech bubble on days that have a note. */
+.mcal__note {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 11px;
+    height: 11px;
+    opacity: 0.72;
+}
+
+.mcal__note svg { width: 100%; height: 100%; }
+
 @media (min-width: 768px) {
+    .mcal__note { top: 6px; right: 6px; width: 13px; height: 13px; }
     .mcal__d { top: 5px; left: 7px; font-size: 11px; }
     .mcal__s { font-size: 16px; }
     .mcal__day { font-size: 14px; border-radius: 10px; }
@@ -1034,6 +1049,7 @@ a.stat:hover { border-color: var(--border-strong); }
 }
 
 .ygrid__c {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1052,6 +1068,20 @@ a.ygrid__c:hover { filter: brightness(0.93); }
 .ygrid__c--none { background: transparent; }
 .ygrid__c--future { background: transparent; box-shadow: inset 0 0 0 1px var(--surface-2); }
 .ygrid__dl--avg { padding-top: 6px; line-height: 1.2; }
+
+.ygrid__note {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 6px;
+    height: 6px;
+    opacity: 0.75;
+}
+
+.ygrid__note svg { width: 100%; height: 100%; }
+
+/* Nudge the score left so it doesn't run into the note bubble on small cells. */
+.ygrid__c--note { padding-right: 4px; }
 
 .ygrid__avg {
     padding-top: 6px;
@@ -1073,6 +1103,8 @@ a.ygrid__c:hover { filter: brightness(0.93); }
     .ygrid__mh { font-size: 11px; }
     .ygrid__dl { font-size: 10.5px; line-height: 22px; padding-right: 6px; }
     .ygrid__c { height: 22px; font-size: 11px; border-radius: 5px; }
+    .ygrid__note { top: 2px; right: 2px; width: 8px; height: 8px; }
+    .ygrid__c--note { padding-right: 0; }
     .ygrid__avg { font-size: 11px; }
 }
 
@@ -1085,8 +1117,17 @@ a.ygrid__c:hover { filter: brightness(0.93); }
     font-variant-numeric: tabular-nums;
 }
 
+.legend__note {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 6px;
+}
+
+.legend__note svg { width: 12px; height: 12px; color: var(--text-2); }
+
 .legend__bar {
-    width: 96px;
+    width: 72px;
     height: 6px;
     border-radius: 999px;
     background: var(--mood-gradient);
@@ -1387,4 +1428,8 @@ a.ygrid__c:hover { filter: brightness(0.93); }
 @keyframes page-in {
     from { opacity: 0.4; }
     to { opacity: 1; }
+}
+
+@media (min-width: 768px) {
+    .legend__bar { width: 96px; }
 }

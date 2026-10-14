@@ -189,6 +189,9 @@ var en = map[string]string{
 	// friend access
 	"friend_access.forbidden": "You need to be friends to see this profile.",
 
+	// calendars
+	"calendar.has_note": "Note",
+
 	// mood buckets
 	"bucket.excellent": "Excellent",
 	"bucket.great":     "Great",

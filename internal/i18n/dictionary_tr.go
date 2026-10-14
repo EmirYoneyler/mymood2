@@ -184,6 +184,9 @@ var tr = map[string]string{
 	// friend access
 	"friend_access.forbidden": "Bu profili görmek için arkadaş olmanız gerekiyor.",
 
+	// calendars
+	"calendar.has_note": "Not",
+
 	// mood buckets
 	"bucket.excellent": "Mükemmel",
 	"bucket.great":     "Harika",

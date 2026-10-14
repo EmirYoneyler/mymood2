@@ -23,20 +23,23 @@ func (c rgbColor) Hex() string {
 	return fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
 }
 
-// scoreGradientStops maps a 1-10 score to a continuous color: red at the
-// bottom, through orange and amber, to green, ending in teal at the top.
-// Stops are evenly spaced so every tenth of a point produces a slightly
-// different shade. The same stops are mirrored in app.css (.range track,
-// legend) and app.js (live preview) - keep them in sync.
+// scoreGradientStops maps a 1-10 score to a continuous, vivid color: red at
+// the bottom, through orange and yellow, lime and green, ending in turquoise
+// at the top. The extra lime stop keeps the yellow-to-green middle bright
+// instead of the muddy olive a straight RGB blend would give. Every tenth of
+// a point still produces a slightly different shade. The same stops are
+// mirrored in app.css (--mood-gradient) and app.js (live preview) - keep
+// them in sync.
 var scoreGradientStops = []struct {
 	Pos   float64
 	Color rgbColor
 }{
-	{1.00, rgbColor{229, 72, 77}},   // red
-	{3.25, rgbColor{247, 107, 21}},  // orange
-	{5.50, rgbColor{255, 197, 61}},  // amber
-	{7.75, rgbColor{70, 167, 88}},   // green
-	{10.00, rgbColor{18, 165, 148}}, // teal
+	{1.00, rgbColor{255, 59, 48}},  // red
+	{3.25, rgbColor{255, 140, 26}}, // orange
+	{5.50, rgbColor{255, 214, 10}}, // yellow
+	{6.60, rgbColor{163, 230, 53}}, // lime
+	{7.75, rgbColor{34, 197, 94}},  // green
+	{10.00, rgbColor{6, 214, 199}}, // turquoise
 }
 
 func scoreGradient(score float64) rgbColor {
@@ -159,6 +162,15 @@ func formatAverage(average float64, count int) string {
 	return fmt.Sprintf("%.1f", average)
 }
 
+// indexByDate maps each entry by its "2006-01-02" date.
+func indexByDate(entries []models.MoodEntry) map[string]models.MoodEntry {
+	byDate := make(map[string]models.MoodEntry, len(entries))
+	for _, e := range entries {
+		byDate[e.EntryDate.Format(dateParamLayout)] = e
+	}
+	return byDate
+}
+
 // --- Month calendar (Today page, landing page demo) ---
 
 type monthDay struct {
@@ -169,8 +181,10 @@ type monthDay struct {
 	IsToday    bool
 	Selected   bool
 	HasEntry   bool
+	HasNote    bool
 	ScoreText  string
 	Background string
+	Title      string
 }
 
 type monthCalendar struct {
@@ -191,10 +205,7 @@ type monthCalendar struct {
 // at monthStart. selected highlights a day (zero time for none), and days after
 // today are marked as future so they can't be picked.
 func buildMonthCalendar(monthStart, today, selected time.Time, entries []models.MoodEntry, lang string, interactive bool) monthCalendar {
-	scoreByDate := make(map[string]float64, len(entries))
-	for _, e := range entries {
-		scoreByDate[e.EntryDate.Format(dateParamLayout)] = e.Score
-	}
+	entryByDate := indexByDate(entries)
 
 	daysInMonth := monthStart.AddDate(0, 1, -1).Day()
 	leading := (int(monthStart.Weekday()) + 6) % 7
@@ -215,11 +226,13 @@ func buildMonthCalendar(monthStart, today, selected time.Time, entries []models.
 			IsToday:   date.Equal(today),
 			Selected:  !selected.IsZero() && date.Equal(selected),
 		}
-		if score, ok := scoreByDate[day.DateParam]; ok {
+		if e, ok := entryByDate[day.DateParam]; ok {
 			day.HasEntry = true
-			day.ScoreText = scoreLabel(score)
-			day.Background = scoreGradient(score).Hex()
-			sum += score
+			day.ScoreText = scoreLabel(e.Score)
+			day.Background = scoreGradient(e.Score).Hex()
+			day.HasNote = e.NoteText() != ""
+			day.Title = e.NoteText()
+			sum += e.Score
 			count++
 		}
 		days = append(days, day)
@@ -253,6 +266,7 @@ type yearCell struct {
 	Future     bool
 	Clickable  bool
 	HasEntry   bool
+	HasNote    bool
 	ScoreText  string
 	Background string
 	DateParam  string
@@ -274,10 +288,7 @@ type yearCalendar struct {
 // buildYearCalendar lays out a whole year as 31 rows (days) by 12 columns
 // (months), the "year in pixels" view.
 func buildYearCalendar(year int, today time.Time, entries []models.MoodEntry, editable bool, lang string) yearCalendar {
-	scoreByDate := make(map[string]float64, len(entries))
-	for _, e := range entries {
-		scoreByDate[e.EntryDate.Format(dateParamLayout)] = e.Score
-	}
+	entryByDate := indexByDate(entries)
 
 	monthNames := i18n.MonthAbbrs(lang)
 
@@ -303,12 +314,16 @@ func buildYearCalendar(year int, today time.Time, entries []models.MoodEntry, ed
 				Title:     i18n.FormatDate(lang, date),
 			}
 
-			if score, ok := scoreByDate[cell.DateParam]; ok {
+			if e, ok := entryByDate[cell.DateParam]; ok {
 				cell.HasEntry = true
-				cell.ScoreText = scoreLabel(score)
-				cell.Background = scoreGradient(score).Hex()
-				cell.Title += " · " + fmt.Sprintf("%.1f", score)
-				monthSums[month] += score
+				cell.ScoreText = scoreLabel(e.Score)
+				cell.Background = scoreGradient(e.Score).Hex()
+				cell.Title += " · " + e.ScoreText()
+				if note := e.NoteText(); note != "" {
+					cell.HasNote = true
+					cell.Title += " · " + note
+				}
+				monthSums[month] += e.Score
 				monthCounts[month]++
 			}
 

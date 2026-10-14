@@ -63,8 +63,8 @@
                 <div class="ygrid__dl">{{.Day}}</div>
                 {{range .Cells}}
                 {{if not .Valid}}<div class="ygrid__c ygrid__c--none"></div>
-                {{else if .Clickable}}<a href="/mood?date={{.DateParam}}" class="ygrid__c" title="{{.Title}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}>{{.ScoreText}}</a>
-                {{else}}<div class="ygrid__c{{if .Future}} ygrid__c--future{{end}}" title="{{.Title}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}>{{.ScoreText}}</div>
+                {{else if .Clickable}}<a href="/mood?date={{.DateParam}}" class="ygrid__c{{if .HasNote}} ygrid__c--note{{end}}" title="{{.Title}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}>{{.ScoreText}}{{if .HasNote}}<span class="ygrid__note">{{template "icon-note"}}</span>{{end}}</a>
+                {{else}}<div class="ygrid__c{{if .Future}} ygrid__c--future{{end}}{{if .HasNote}} ygrid__c--note{{end}}" title="{{.Title}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}>{{.ScoreText}}{{if .HasNote}}<span class="ygrid__note">{{template "icon-note"}}</span>{{end}}</div>
                 {{end}}
                 {{end}}
                 {{end}}
@@ -74,7 +74,7 @@
 
             <div class="card__foot card__foot--spaced">
                 <span>{{if .Editable}}{{call .T "profile.calendar_hint"}}{{end}}</span>
-                <span class="legend" aria-hidden="true">1<span class="legend__bar"></span>10</span>
+                <span class="legend" aria-hidden="true"><span class="legend__note">{{template "icon-note"}}{{call .T "calendar.has_note"}}</span>1<span class="legend__bar"></span>10</span>
             </div>
         </section>
 
