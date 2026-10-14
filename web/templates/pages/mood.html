@@ -93,8 +93,8 @@
             </div>
             {{template "month-calendar" .Calendar}}
             <div class="card__foot">
-                <span>{{if .Calendar.Count}}{{call .T "mood.month_summary" .Calendar.AverageText .Calendar.Count}}{{else}}{{call .T "mood.month_empty"}}{{end}}</span>
-                <span class="legend" aria-hidden="true">1<span class="legend__bar"></span>10</span>
+                <span class="nowrap">{{if .Calendar.Count}}{{call .T "mood.month_summary" .Calendar.AverageText .Calendar.Count}}{{else}}{{call .T "mood.month_empty"}}{{end}}</span>
+                <span class="legend" aria-hidden="true"><span class="legend__note">{{template "icon-note"}}{{call .T "calendar.has_note"}}</span>1<span class="legend__bar"></span>10</span>
             </div>
         </section>
     </div>

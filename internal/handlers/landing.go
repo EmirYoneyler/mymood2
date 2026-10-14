@@ -25,6 +25,9 @@ func Landing(c *fiber.Ctx) error {
 	}, "layouts/base")
 }
 
+// demoNote marks a few demo days as having a note (only its presence shows).
+var demoNote = "…"
+
 // demoEntries fills a month with plausible, deterministic sample scores for
 // the landing page preview (a few days left blank, like a real month).
 func demoEntries(month time.Time) []models.MoodEntry {
@@ -38,10 +41,14 @@ func demoEntries(month time.Time) []models.MoodEntry {
 		jitter := float64((d*37)%11)/10 - 0.5
 		score := math.Round((6.8+wave+jitter)*10) / 10
 		score = math.Max(1, math.Min(10, score))
-		entries = append(entries, models.MoodEntry{
+		entry := models.MoodEntry{
 			Score:     score,
 			EntryDate: time.Date(month.Year(), month.Month(), d, 0, 0, 0, 0, time.UTC),
-		})
+		}
+		if d%5 == 2 {
+			entry.Note = &demoNote
+		}
+		entries = append(entries, entry)
 	}
 	return entries
 }
