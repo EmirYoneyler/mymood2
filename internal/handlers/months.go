@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/emiryoneyler/mymood/internal/i18n"
 	"github.com/emiryoneyler/mymood/internal/middleware"
 	"github.com/emiryoneyler/mymood/internal/repository"
@@ -18,10 +20,11 @@ func NewMonthsHandler(moods *repository.MoodRepository, friendships *repository.
 }
 
 type monthRow struct {
-	Label       string
-	Year        int
-	AverageText string
-	Count       int
+	Label   string
+	Year    int
+	Average float64
+	Count   int
+	Link    string
 }
 
 // Show lists every calendar month the logged-in user has logged a mood in.
@@ -54,24 +57,32 @@ func (h *MonthsHandler) render(c *fiber.Ctx, viewerID, targetID, username string
 		return fiber.ErrInternalServerError
 	}
 
-	rows := make([]monthRow, 0, len(summaries))
-	for _, s := range summaries {
-		rows = append(rows, monthRow{
-			Label:       monthNames[int(s.Month.Month())-1],
-			Year:        s.Month.Year(),
-			AverageText: s.AverageText(),
-			Count:       s.Count,
-		})
-	}
-
 	profileLink := "/profile"
 	if username != "" {
 		profileLink = "/profile/" + username
 	}
 
-	return renderPage(c, "pages/months", withNav(c.Context(), h.friendships, viewerID, fiber.Map{
+	rows := make([]monthRow, 0, len(summaries))
+	for _, s := range summaries {
+		// Your own months open that month's calendar on the Today page, where
+		// any day can be edited; a friend's open their read-only year view.
+		link := "/mood?month=" + s.Month.Format(monthParamLayout) + "#calendar"
+		if username != "" {
+			link = profileLink + "?year=" + strconv.Itoa(s.Month.Year())
+		}
+		rows = append(rows, monthRow{
+			Label:   monthNames[int(s.Month.Month())-1],
+			Year:    s.Month.Year(),
+			Average: s.Average,
+			Count:   s.Count,
+			Link:    link,
+		})
+	}
+
+	return renderPage(c, "pages/months", withNav(c, h.friendships, viewerID, "profile", fiber.Map{
 		"Months":      rows,
 		"Username":    username,
 		"ProfileLink": profileLink,
+		"TitleKey":    "months.title",
 	}), "layouts/base")
 }

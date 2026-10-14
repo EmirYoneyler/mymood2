@@ -26,7 +26,7 @@ func (h *SettingsHandler) Show(c *fiber.Ctx) error {
 		return fiber.ErrInternalServerError
 	}
 
-	return renderPage(c, "pages/settings", withNav(c.Context(), h.friendships, userID, fiber.Map{
+	return renderPage(c, "pages/settings", withNav(c, h.friendships, userID, "settings", fiber.Map{
 		"Username": user.Username,
 		"Email":    user.Email,
 	}), "layouts/base")
@@ -77,7 +77,7 @@ func (h *SettingsHandler) renderSettingsError(c *fiber.Ctx, userID, message stri
 	}
 
 	c.Status(fiber.StatusBadRequest)
-	return renderPage(c, "pages/settings", withNav(c.Context(), h.friendships, userID, fiber.Map{
+	return renderPage(c, "pages/settings", withNav(c, h.friendships, userID, "settings", fiber.Map{
 		"Username": user.Username,
 		"Email":    user.Email,
 		"Error":    message,

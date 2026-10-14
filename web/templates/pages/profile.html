@@ -1,150 +1,92 @@
-<main class="space-y-6">
-    <h1 class="text-2xl font-extrabold">
-        {{if .Username}}{{call .T "profile.title_other" .Username}}{{else}}{{call .T "profile.title_self"}}{{end}}
-    </h1>
-
-    {{if .Saved}}
-    <p class="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">{{call .T "profile.saved"}}</p>
-    {{end}}
-    {{if .Removed}}
-    <p class="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">{{call .T "profile.removed"}}</p>
+<div class="container">
+    {{if not .Editable}}
+    <a href="/friends" class="back-link">{{template "icon-chevron-left"}}{{call .T "nav.friends"}}</a>
     {{end}}
 
-    {{if and .Editable (eq .TotalEntries 0)}}
-    <div class="glass-card flex flex-wrap items-center justify-between gap-3 p-5">
-        <p class="text-sm text-slate-300">{{call .T "profile.empty_state"}}</p>
-        <a href="/mood" class="rounded-xl bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-95">{{call .T "profile.rate_today"}}</a>
-    </div>
-    {{end}}
+    <header class="profile-head">
+        <span class="avatar avatar--lg" data-tone="{{avatarTone .Username}}" aria-hidden="true">{{initial .Username}}</span>
+        <div class="profile-head__text">
+            <h1 class="profile-head__name">{{.Username}}</h1>
+            <p class="profile-head__meta">{{call .T "profile.days_logged" .TotalEntries}}</p>
+        </div>
+    </header>
 
-    <section class="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        <div class="glass-card p-4 text-center sm:p-6">
-            <span class="block text-2xl font-extrabold sm:text-3xl">{{.AverageScore}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.all_time_avg"}}</span>
+    <div class="stack">
+        {{if and .Editable (eq .TotalEntries 0)}}
+        <div class="card empty">
+            <p class="empty__title">{{call .T "profile.empty_title"}}</p>
+            <p class="empty__text">{{call .T "profile.empty_text"}}</p>
+            <a href="/mood" class="btn btn-primary">{{call .T "profile.rate_today"}}</a>
         </div>
-        <div class="glass-card p-4 text-center sm:p-6">
-            <span class="block text-2xl font-extrabold text-cyan-300 sm:text-3xl">{{.CurrentStreak}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.current_streak"}}</span>
-        </div>
-        <div class="glass-card p-4 text-center sm:p-6">
-            <span class="block text-2xl font-extrabold sm:text-3xl">{{.LongestStreak}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.longest_streak"}}</span>
-        </div>
-        <div class="glass-card p-4 text-center sm:p-6">
-            <span class="block text-2xl font-extrabold sm:text-3xl">{{.TotalEntries}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.total_entries"}}</span>
-        </div>
-    </section>
+        {{end}}
 
-    <section class="grid grid-cols-3 gap-3 sm:gap-4">
-        <div class="glass-card p-4 text-center sm:p-6">
-            <span class="block text-2xl font-extrabold text-fuchsia-300 sm:text-3xl">{{.WeekAverage}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.this_week"}}</span>
-        </div>
-        <a href="{{.MonthsLink}}" class="glass-card p-4 text-center transition hover:bg-white/10 sm:p-6">
-            <span class="block text-2xl font-extrabold text-fuchsia-300 sm:text-3xl">{{.MonthAverage}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.this_month"}} <span class="text-fuchsia-400">→</span></span>
-        </a>
-        <a href="{{.YearsLink}}" class="glass-card p-4 text-center transition hover:bg-white/10 sm:p-6">
-            <span class="block text-2xl font-extrabold text-fuchsia-300 sm:text-3xl">{{.YearAverage}}</span>
-            <span class="text-xs text-slate-400 sm:text-sm">{{call .T "profile.this_year"}} <span class="text-fuchsia-400">→</span></span>
-        </a>
-    </section>
+        <section class="stats">
+            <a href="{{.MonthsLink}}" class="stat">
+                <span class="stat__label">{{call .T "profile.this_month"}}{{template "icon-chevron-right"}}</span>
+                <span class="stat__value">{{.MonthAverage}}</span>
+            </a>
+            <a href="{{.YearsLink}}" class="stat">
+                <span class="stat__label">{{call .T "profile.this_year"}}{{template "icon-chevron-right"}}</span>
+                <span class="stat__value">{{.YearAverage}}</span>
+            </a>
+            <div class="stat">
+                <span class="stat__label">{{call .T "profile.all_time"}}</span>
+                <span class="stat__value">{{.AverageScore}}</span>
+            </div>
+        </section>
 
-    <section class="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
-        <div class="glass-card p-6">
-            <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2">
+        <section class="card">
+            <div class="card__head">
+                <div>
+                    <h2 class="card__title">{{call .T "profile.year_title"}}</h2>
+                    <p class="card__sub">{{if .YearDaysTracked}}{{call .T "profile.year_summary" .ViewYearAverage .YearDaysTracked}}{{else}}{{call .T "profile.year_empty"}}{{end}}</p>
+                </div>
+                <div class="year-nav">
                     {{if .CanGoBack}}
-                    <a href="?year={{.PrevYear}}" class="rounded-lg border border-white/10 px-2 py-1 text-sm text-slate-300 transition hover:bg-white/10">←</a>
+                    <a href="{{.ProfileLink}}?year={{.PrevYear}}" class="icon-btn icon-btn--sm" aria-label="{{.PrevYear}}">{{template "icon-chevron-left"}}</a>
                     {{else}}
-                    <span class="rounded-lg border border-white/5 px-2 py-1 text-sm text-slate-600">←</span>
+                    <span class="icon-btn icon-btn--sm is-disabled" aria-hidden="true">{{template "icon-chevron-left"}}</span>
                     {{end}}
-                    <h2 class="text-lg font-bold">{{call .T "profile.calendar_title" .Calendar.Year}}</h2>
+                    <span class="year-nav__label">{{.Calendar.Year}}</span>
                     {{if .HasNextYear}}
-                    <a href="?year={{.NextYear}}" class="rounded-lg border border-white/10 px-2 py-1 text-sm text-slate-300 transition hover:bg-white/10">→</a>
+                    <a href="{{.ProfileLink}}?year={{.NextYear}}" class="icon-btn icon-btn--sm" aria-label="{{.NextYear}}">{{template "icon-chevron-right"}}</a>
                     {{else}}
-                    <span class="rounded-lg border border-white/5 px-2 py-1 text-sm text-slate-600">→</span>
+                    <span class="icon-btn icon-btn--sm is-disabled" aria-hidden="true">{{template "icon-chevron-right"}}</span>
                     {{end}}
                 </div>
-                {{if .Editable}}<p class="text-xs text-slate-500">{{call .T "profile.calendar_hint"}}</p>{{end}}
-            </div>
-            <div class="calendar-scroll">
-                <table class="calendar-table">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            {{range .Calendar.MonthNames}}<th>{{.}}</th>{{end}}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{range .Calendar.Rows}}
-                        <tr>
-                            <td class="day-label">{{.Day}}</td>
-                            {{range .Cells}}
-                            <td>
-                                {{if .Valid}}
-                                {{if .HasEntry}}
-                                {{if .Clickable}}
-                                <a href="/mood?date={{.DateParam}}" class="cal-cell"
-                                    style="background-color:{{.Background}}">{{.ScoreText}}</a>
-                                {{else}}
-                                <div class="cal-cell" style="background-color:{{.Background}}">{{.ScoreText}}</div>
-                                {{end}}
-                                {{else}}
-                                {{if .Clickable}}
-                                <a href="/mood?date={{.DateParam}}" class="cal-cell cal-empty"></a>
-                                {{else}}
-                                <div class="cal-cell cal-empty"></div>
-                                {{end}}
-                                {{end}}
-                                {{end}}
-                            </td>
-                            {{end}}
-                        </tr>
-                        {{end}}
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td class="day-label">Ø</td>
-                            {{range .Calendar.MonthAverages}}<td class="month-avg text-center">{{.}}</td>{{end}}
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-
-        <div class="space-y-4">
-            <div class="glass-card p-5">
-                <h3 class="mb-3 text-sm font-bold text-slate-300">{{call .T "profile.distribution"}}</h3>
-                <ul class="space-y-2">
-                    {{range .Distribution}}
-                    <li class="flex items-center justify-between text-sm">
-                        <span><span class="legend-swatch" style="background-color:{{.Color}}"></span>{{.Label}}</span>
-                        <span class="text-slate-400">{{.Count}} · %{{.Pct}}</span>
-                    </li>
-                    {{end}}
-                </ul>
             </div>
 
-            <div class="glass-card p-5">
-                <h3 class="mb-3 text-sm font-bold text-slate-300">{{call .T "profile.summary_title" .Calendar.Year}}</h3>
-                <ul class="space-y-2 text-sm">
-                    <li class="flex items-center justify-between"><span class="text-slate-400">{{call .T "profile.daily_average"}}</span><span class="font-semibold">{{.ViewYearAverage}}</span></li>
-                    <li class="flex items-center justify-between"><span class="text-slate-400">{{call .T "profile.days_tracked"}}</span><span class="font-semibold">{{.YearDaysTracked}}</span></li>
-                    <li class="flex items-center justify-between"><span class="text-slate-400">{{call .T "profile.tracking_rate"}}</span><span class="font-semibold">%{{.TrackingRate}}</span></li>
-                </ul>
+            <div class="ygrid">
+                <div></div>
+                {{range .Calendar.MonthNames}}<div class="ygrid__mh">{{.}}</div>{{end}}
+                {{range .Calendar.Rows}}
+                <div class="ygrid__dl">{{.Day}}</div>
+                {{range .Cells}}
+                {{if not .Valid}}<div class="ygrid__c ygrid__c--none"></div>
+                {{else if .Clickable}}<a href="/mood?date={{.DateParam}}" class="ygrid__c" title="{{.Title}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}>{{.ScoreText}}</a>
+                {{else}}<div class="ygrid__c{{if .Future}} ygrid__c--future{{end}}" title="{{.Title}}"{{if .HasEntry}} style="background-color:{{.Background}}"{{end}}>{{.ScoreText}}</div>
+                {{end}}
+                {{end}}
+                {{end}}
+                <div class="ygrid__dl ygrid__dl--avg" title="{{call .T "profile.month_avg"}}">Ø</div>
+                {{range .Calendar.MonthAverages}}<div class="ygrid__avg">{{.}}</div>{{end}}
             </div>
 
-            <div class="glass-card p-5">
-                <h3 class="mb-3 text-sm font-bold text-slate-300">{{call .T "profile.legend"}}</h3>
-                <ul class="space-y-1.5 text-xs text-slate-400">
-                    {{range .Legend}}
-                    <li><span class="legend-swatch" style="background-color:{{.Color}}"></span>{{.Range}} {{.Label}}</li>
-                    {{end}}
-                    <li><span class="legend-swatch cal-empty"></span>{{call .T "profile.empty_swatch"}}</li>
-                </ul>
+            <div class="card__foot card__foot--spaced">
+                <span>{{if .Editable}}{{call .T "profile.calendar_hint"}}{{end}}</span>
+                <span class="legend" aria-hidden="true">1<span class="legend__bar"></span>10</span>
             </div>
-        </div>
-    </section>
-</main>
+        </section>
+
+        <nav class="card card--flush list" aria-label="{{call .T "profile.more"}}">
+            <a href="{{.MonthsLink}}" class="list-row">
+                <span class="list-row__main"><span class="list-row__title">{{call .T "months.title"}}</span></span>
+                {{template "icon-chevron-right"}}
+            </a>
+            <a href="{{.YearsLink}}" class="list-row">
+                <span class="list-row__main"><span class="list-row__title">{{call .T "years.title"}}</span></span>
+                {{template "icon-chevron-right"}}
+            </a>
+        </nav>
+    </div>
+</div>

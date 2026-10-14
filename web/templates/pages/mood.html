@@ -1,94 +1,101 @@
-<main>
-    <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-            <h1 class="text-2xl font-extrabold">
-                {{if .IsToday}}{{call .T "mood.title_today"}}{{else}}{{call .T "mood.title_other" .SelectedDateText}}{{end}}
-            </h1>
-            <p class="mt-1 text-sm text-slate-400">{{call .T "mood.subtitle"}}</p>
-        </div>
-        <form method="GET" action="/mood">
-            <label class="mb-1 block text-xs font-medium text-slate-400">{{call .T "mood.rate_past_day"}}</label>
-            <input type="date" name="date" max="{{.MaxDate}}" value="{{.SelectedDate.Format "2006-01-02"}}"
-                onchange="this.form.submit()"
-                class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
-        </form>
-    </div>
+<div class="container container--today">
+    <div class="today">
+        <div class="today__main">
+            <div class="day-nav">
+                {{if .HasPrevDate}}
+                <a href="/mood?date={{.PrevDate}}" class="icon-btn" aria-label="{{call .T "mood.prev_day"}}" title="{{call .T "mood.prev_day"}}">{{template "icon-chevron-left"}}</a>
+                {{else}}
+                <span class="icon-btn is-disabled" aria-hidden="true">{{template "icon-chevron-left"}}</span>
+                {{end}}
+                <div class="day-nav__center">
+                    <div class="day-nav__eyebrow">{{if .IsToday}}{{call .T "common.today"}}{{else if .IsYesterday}}{{call .T "common.yesterday"}}{{else}}{{call .T "mood.past_day"}}{{end}}</div>
+                    <h1 class="day-nav__title">{{.SelectedDateText}}</h1>
+                </div>
+                {{if .HasNextDate}}
+                <a href="/mood?date={{.NextDate}}" class="icon-btn" aria-label="{{call .T "mood.next_day"}}" title="{{call .T "mood.next_day"}}">{{template "icon-chevron-right"}}</a>
+                {{else}}
+                <span class="icon-btn is-disabled" aria-hidden="true">{{template "icon-chevron-right"}}</span>
+                {{end}}
+            </div>
 
-    {{if .Error}}
-    <p class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">{{.Error}}</p>
-    {{end}}
+            <div class="stack">
+                {{if .Saved}}
+                <div class="alert alert-success" role="status" data-autohide>{{template "icon-check"}}<span>{{call .T "mood.saved"}}</span></div>
+                {{end}}
+                {{if .Removed}}
+                <div class="alert alert-info" role="status" data-autohide>{{template "icon-check"}}<span>{{call .T "mood.removed"}}</span></div>
+                {{end}}
+                {{if .Error}}
+                <div class="alert alert-error" role="alert">{{template "icon-alert"}}<span>{{.Error}}</span></div>
+                {{end}}
 
-    <form method="POST" action="/mood" class="glass-card p-6 sm:p-8">
-        <input type="hidden" name="entry_date" value="{{.SelectedDate.Format "2006-01-02"}}">
+                <form method="POST" action="/mood" class="card">
+                    <input type="hidden" name="entry_date" value="{{.SelectedDate}}">
+                    <div class="card__body form">
+                        <div class="picker" data-score>
+                            <label for="score" class="sr-only">{{call .T "mood.score_label"}}</label>
+                            <div class="picker__display">
+                                <div class="picker__value">
+                                    <input type="number" id="score" name="score" class="picker__input" data-score-input
+                                        min="1" max="10" step="0.1" inputmode="decimal" required value="{{.ScoreValue}}">
+                                    <span class="picker__max">/10</span>
+                                </div>
+                                <span class="picker__tag" data-score-tag style="background-color:{{.ScoreColor}}"
+                                    data-label-excellent="{{call .T "bucket.excellent"}}"
+                                    data-label-great="{{call .T "bucket.great"}}"
+                                    data-label-good="{{call .T "bucket.good"}}"
+                                    data-label-low="{{call .T "bucket.low"}}"
+                                    data-label-poor="{{call .T "bucket.poor"}}">{{call .T .ScoreBucket}}</span>
+                            </div>
+                            <input type="range" class="range" data-score-range min="1" max="10" step="0.1" value="{{.ScoreValue}}"
+                                aria-label="{{call .T "mood.score_label"}}">
+                            <div class="range-scale" aria-hidden="true"><span>1</span><span>5</span><span>10</span></div>
+                        </div>
 
-        <div class="flex flex-col items-center gap-4">
-            <span id="scoreEmoji" class="text-6xl transition-transform duration-150">{{if .Today}}{{.Today.Emoji}}{{else}}😐{{end}}</span>
+                        <div class="field">
+                            <label for="note" class="label">{{call .T "mood.note_label"}} <span class="subtle">· {{call .T "common.optional"}}</span></label>
+                            <textarea id="note" name="note" class="textarea" rows="2" maxlength="280" data-counter="noteCount"
+                                placeholder="{{call .T "mood.note_placeholder"}}">{{.NoteText}}</textarea>
+                            <div id="noteCount" class="counter">0 / 280</div>
+                        </div>
 
-            <input type="range" id="scoreRange" min="1" max="10" step="0.1"
-                value="{{if .Today}}{{.Today.Score}}{{else}}5{{end}}"
-                class="w-full accent-fuchsia-500">
-
-            <div class="flex items-center gap-2">
-                <input type="number" name="score" id="scoreInput" min="1" max="10" step="0.1" required
-                    value="{{if .Today}}{{.Today.ScoreText}}{{else}}5.0{{end}}"
-                    class="w-24 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-lg font-bold outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30">
-                <span class="text-sm text-slate-400">/ 10</span>
+                        <div class="form-actions">
+                            {{if .Entry}}
+                            <button type="submit" form="deleteEntry" class="btn btn-danger-ghost">{{call .T "mood.remove"}}</button>
+                            {{end}}
+                            <button type="submit" class="btn btn-primary btn-lg">{{if .Entry}}{{call .T "mood.update"}}{{else}}{{call .T "mood.save"}}{{end}}</button>
+                        </div>
+                    </div>
+                </form>
+                {{if .Entry}}
+                <form id="deleteEntry" method="POST" action="/mood/delete" data-confirm="{{call .T "mood.remove_confirm"}}" hidden>
+                    <input type="hidden" name="entry_date" value="{{.SelectedDate}}">
+                </form>
+                {{end}}
             </div>
         </div>
 
-        <label class="mb-1 mt-6 block text-sm font-medium text-slate-300">{{call .T "mood.note_label"}}</label>
-        <textarea name="note" id="noteInput" maxlength="280" placeholder="{{call .T "mood.note_placeholder"}}"
-            class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none transition focus:border-fuchsia-400/60 focus:ring-2 focus:ring-fuchsia-400/30"
-            rows="3">{{.NoteText}}</textarea>
-        <p id="noteCount" class="mt-1 text-right text-xs text-slate-500">0/280</p>
-
-        <button type="submit"
-            class="mt-4 rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-fuchsia-500/20 transition hover:opacity-90 active:scale-[0.98]">
-            {{call .T "mood.save"}}
-        </button>
-    </form>
-
-    {{if .Today}}
-    <form method="POST" action="/mood/delete" class="mt-3">
-        <input type="hidden" name="entry_date" value="{{.SelectedDate.Format "2006-01-02"}}">
-        <button type="submit"
-            class="rounded-xl border border-red-400/30 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-400/10 active:scale-[0.98]">
-            {{call .T "mood.remove"}}
-        </button>
-    </form>
-    {{end}}
-
-    <script>
-        (function () {
-            var EMOJIS = ["😭", "😭", "😢", "😞", "😕", "😐", "🙂", "😊", "😄", "😁", "🤩"];
-            var range = document.getElementById('scoreRange');
-            var input = document.getElementById('scoreInput');
-            var emoji = document.getElementById('scoreEmoji');
-            var note = document.getElementById('noteInput');
-            var noteCount = document.getElementById('noteCount');
-
-            function updateNoteCount() {
-                noteCount.textContent = note.value.length + '/280';
-            }
-            updateNoteCount();
-            note.addEventListener('input', updateNoteCount);
-
-            function emojiFor(value) {
-                var idx = Math.min(10, Math.max(1, Math.round(parseFloat(value) || 1)));
-                return EMOJIS[idx];
-            }
-
-            function sync(value, source) {
-                var clamped = Math.min(10, Math.max(1, parseFloat(value) || 1));
-                if (source !== 'range') range.value = clamped;
-                if (source !== 'input') input.value = clamped.toFixed(1);
-                emoji.textContent = emojiFor(clamped);
-                emoji.classList.add('scale-125');
-                setTimeout(function () { emoji.classList.remove('scale-125'); }, 150);
-            }
-
-            range.addEventListener('input', function () { sync(range.value, 'range'); });
-            input.addEventListener('input', function () { sync(input.value, 'input'); });
-        })();
-    </script>
-</main>
+        <section id="calendar" class="card today__side" aria-label="{{.Calendar.Label}}">
+            <div class="card__head">
+                <h2 class="card__title">{{.Calendar.Label}}</h2>
+                <div class="year-nav">
+                    {{if .Calendar.HasPrev}}
+                    <a href="/mood?date={{.SelectedDate}}&month={{.Calendar.PrevParam}}#calendar" class="icon-btn icon-btn--sm" aria-label="{{call .T "mood.prev_month"}}">{{template "icon-chevron-left"}}</a>
+                    {{else}}
+                    <span class="icon-btn icon-btn--sm is-disabled" aria-hidden="true">{{template "icon-chevron-left"}}</span>
+                    {{end}}
+                    {{if .Calendar.HasNext}}
+                    <a href="/mood?date={{.SelectedDate}}&month={{.Calendar.NextParam}}#calendar" class="icon-btn icon-btn--sm" aria-label="{{call .T "mood.next_month"}}">{{template "icon-chevron-right"}}</a>
+                    {{else}}
+                    <span class="icon-btn icon-btn--sm is-disabled" aria-hidden="true">{{template "icon-chevron-right"}}</span>
+                    {{end}}
+                </div>
+            </div>
+            {{template "month-calendar" .Calendar}}
+            <div class="card__foot">
+                <span>{{if .Calendar.Count}}{{call .T "mood.month_summary" .Calendar.AverageText .Calendar.Count}}{{else}}{{call .T "mood.month_empty"}}{{end}}</span>
+                <span class="legend" aria-hidden="true">1<span class="legend__bar"></span>10</span>
+            </div>
+        </section>
+    </div>
+</div>

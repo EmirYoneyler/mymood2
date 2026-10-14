@@ -1,26 +1,31 @@
-<main class="space-y-6">
-    <div class="flex items-center gap-3">
-        <a href="{{.ProfileLink}}" class="text-sm text-fuchsia-400 hover:text-fuchsia-300">{{if .Username}}{{call .T "months.back_to_username" .Username}}{{else}}{{call .T "months.back_to_profile"}}{{end}}</a>
+<div class="container">
+    <a href="{{.ProfileLink}}" class="back-link">{{template "icon-chevron-left"}}{{if .Username}}{{.Username}}{{else}}{{call .T "nav.profile"}}{{end}}</a>
+    <div class="page-head">
+        <h1 class="page-title">{{call .T "months.title"}}</h1>
+        {{if .Username}}<p class="page-sub">{{.Username}}</p>{{end}}
     </div>
-    <h1 class="text-2xl font-extrabold">{{if .Username}}{{call .T "months.title_other" .Username}}{{else}}{{call .T "months.title_self"}}{{end}}</h1>
 
     {{if .Months}}
-    <section class="glass-card divide-y divide-white/10 p-2">
+    <div class="card card--flush list">
         {{range .Months}}
-        <a href="{{$.ProfileLink}}?year={{.Year}}" class="flex items-center justify-between gap-3 px-4 py-3 transition hover:bg-white/5">
-            <span class="font-medium">{{.Label}} {{.Year}}</span>
-            <span class="flex items-center gap-3 text-sm">
-                <span class="text-slate-500">{{.Count}} {{call $.T "months.days_suffix"}}</span>
-                <span class="font-bold text-fuchsia-300">{{.AverageText}}</span>
+        <a href="{{.Link}}" class="list-row">
+            <span class="list-row__main">
+                <span class="list-row__title">{{.Label}} {{.Year}}</span>
+                <span class="list-row__meta">{{call $.T "months.days" .Count}}</span>
             </span>
+            <span class="score" style="background-color:{{scoreColor .Average}}">{{printf "%.1f" .Average}}</span>
         </a>
         {{end}}
-    </section>
+    </div>
     {{else}}
-    <div class="glass-card p-8 text-center text-slate-300">
-        {{if .Username}}{{call .T "months.no_entries_other" .Username}}{{else}}
-        {{call .T "months.no_entries_self"}}<a href="/mood" class="font-medium text-fuchsia-400 hover:text-fuchsia-300">{{call .T "months.rate_today_link"}}</a> {{call .T "months.no_entries_self_suffix"}}
+    <div class="card empty">
+        {{if .Username}}
+        <p class="empty__text">{{call .T "months.no_entries_other" .Username}}</p>
+        {{else}}
+        <p class="empty__title">{{call .T "months.no_entries_title"}}</p>
+        <p class="empty__text">{{call .T "months.no_entries_text"}}</p>
+        <a href="/mood" class="btn btn-primary">{{call .T "profile.rate_today"}}</a>
         {{end}}
     </div>
     {{end}}
-</main>
+</div>

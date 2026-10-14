@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/emiryoneyler/mymood/internal/config"
@@ -15,6 +17,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/utils"
 	"github.com/gofiber/template/html/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -31,10 +34,12 @@ func main() {
 	}
 
 	engine := html.New("./web/templates", ".html")
+	engine.AddFuncMap(handlers.TemplateFuncs())
 
 	app := fiber.New(fiber.Config{
-		AppName: "mymood",
-		Views:   engine,
+		AppName:      "mymood",
+		Views:        engine,
+		ErrorHandler: errorHandler,
 	})
 
 	app.Use(logger.New())
@@ -42,10 +47,11 @@ func main() {
 	app.Use(func(c *fiber.Ctx) error {
 		// helmet always sets this to "require-corp" (its config merging
 		// treats an empty override as "use the default", so it can't be
-		// disabled via Config). require-corp blocks the third-party CDN
-		// scripts this app depends on (Tailwind Play CDN, htmx, Google
-		// Fonts) since they don't send a matching Cross-Origin-Resource-Policy
-		// header, so we strip it after helmet sets it.
+		// disabled via Config). require-corp blocks the third-party
+		// resources this app depends on (htmx, Google Fonts, Google
+		// Analytics) since they don't send a matching
+		// Cross-Origin-Resource-Policy header, so we strip it after helmet
+		// sets it.
 		c.Response().Header.Del("Cross-Origin-Embedder-Policy")
 		return c.Next()
 	})
@@ -56,23 +62,7 @@ func main() {
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
 
-	app.Get("/lang/:code", func(c *fiber.Ctx) error {
-		code := c.Params("code")
-		if i18n.Supported(code) {
-			c.Cookie(&fiber.Cookie{
-				Name:     custommw.LangCookieName,
-				Value:    code,
-				Path:     "/",
-				MaxAge:   365 * 24 * 60 * 60,
-				SameSite: fiber.CookieSameSiteLaxMode,
-			})
-		}
-		ref := c.Get("Referer")
-		if ref == "" {
-			ref = "/"
-		}
-		return c.Redirect(ref)
-	})
+	app.Get("/lang/:code", handlers.SetLanguage)
 
 	if cfg.DatabaseURL != "" {
 		pool, err := database.NewPool(context.Background(), cfg.DatabaseURL)
@@ -109,12 +99,7 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 		LimitReached: func(c *fiber.Ctx) error {
 			lang := custommw.CurrentLang(c)
 			c.Status(fiber.StatusTooManyRequests)
-			return c.Render("pages/error", fiber.Map{
-				"Title":       "429",
-				"Message":     i18n.T(lang, "error.too_many_requests_message"),
-				"T":           i18n.Translator(lang),
-				"CurrentLang": lang,
-			}, "layouts/base")
+			return renderError(c, lang, "429", i18n.T(lang, "error.too_many_requests_message"))
 		},
 	})
 
@@ -124,16 +109,7 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	app.Post("/login", authLimiter, authHandler.Login)
 	app.Post("/logout", authHandler.Logout)
 
-	app.Get("/", custommw.LoadSession(cfg.JWTSecret), func(c *fiber.Ctx) error {
-		if _, ok := custommw.UserIDFromContext(c); ok {
-			return c.Redirect("/feed")
-		}
-		lang := custommw.CurrentLang(c)
-		return c.Render("pages/landing", fiber.Map{
-			"T":           i18n.Translator(lang),
-			"CurrentLang": lang,
-		}, "layouts/base")
-	})
+	app.Get("/", custommw.LoadSession(cfg.JWTSecret), handlers.Landing)
 
 	requireAuth := custommw.RequireAuth(cfg.JWTSecret)
 
@@ -163,11 +139,45 @@ func registerRoutes(app *fiber.App, cfg config.Config, pool *pgxpool.Pool) {
 	app.Use(func(c *fiber.Ctx) error {
 		lang := custommw.CurrentLang(c)
 		c.Status(fiber.StatusNotFound)
-		return c.Render("pages/error", fiber.Map{
-			"Title":       "404",
-			"Message":     i18n.T(lang, "error.not_found_message"),
-			"T":           i18n.Translator(lang),
-			"CurrentLang": lang,
-		}, "layouts/base")
+		return renderError(c, lang, "404", i18n.T(lang, "error.not_found_message"))
 	})
+}
+
+// errorHandler renders handler errors (fiber.ErrInternalServerError, the
+// friends-only 403, ...) as a proper branded page instead of plain text.
+func errorHandler(c *fiber.Ctx, err error) error {
+	lang := custommw.CurrentLang(c)
+	code := fiber.StatusInternalServerError
+	message := i18n.T(lang, "error.generic_message")
+
+	var fe *fiber.Error
+	if errors.As(err, &fe) {
+		code = fe.Code
+		switch {
+		case code == fiber.StatusNotFound:
+			message = i18n.T(lang, "error.not_found_message")
+		case code < fiber.StatusInternalServerError && fe.Message != "" && fe.Message != utils.StatusMessage(code):
+			message = fe.Message
+		}
+	}
+	if code >= fiber.StatusInternalServerError {
+		log.Printf("error %d on %s %s: %v", code, c.Method(), c.OriginalURL(), err)
+	}
+
+	c.Status(code)
+	if renderErr := renderError(c, lang, strconv.Itoa(code), message); renderErr != nil {
+		return c.SendString(message)
+	}
+	return nil
+}
+
+func renderError(c *fiber.Ctx, lang, title, message string) error {
+	return c.Render("pages/error", fiber.Map{
+		"Title":       title,
+		"Message":     message,
+		"T":           i18n.Translator(lang),
+		"CurrentLang": lang,
+		"CurrentPath": c.OriginalURL(),
+		"TitleKey":    "error.title",
+	}, "layouts/base")
 }

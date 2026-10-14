@@ -112,42 +112,6 @@ func (r *MoodRepository) ListBetween(ctx context.Context, userID string, start, 
 	return collectMoodEntries(rows)
 }
 
-// ListEntryDates returns all dates a user has logged a mood, oldest first.
-func (r *MoodRepository) ListEntryDates(ctx context.Context, userID string) ([]time.Time, error) {
-	const query = `SELECT entry_date FROM mood_entries WHERE user_id = $1 ORDER BY entry_date ASC`
-
-	rows, err := r.db.Query(ctx, query, userID)
-	if err != nil {
-		return nil, fmt.Errorf("listing entry dates: %w", err)
-	}
-	defer rows.Close()
-
-	var dates []time.Time
-	for rows.Next() {
-		var d time.Time
-		if err := rows.Scan(&d); err != nil {
-			return nil, err
-		}
-		dates = append(dates, d)
-	}
-	return dates, rows.Err()
-}
-
-// LastActivityAt returns the timestamp of a user's most recently created mood
-// entry. The second return value is false if the user has no entries yet.
-func (r *MoodRepository) LastActivityAt(ctx context.Context, userID string) (time.Time, bool, error) {
-	const query = `SELECT max(created_at) FROM mood_entries WHERE user_id = $1`
-
-	var lastActivity *time.Time
-	if err := r.db.QueryRow(ctx, query, userID).Scan(&lastActivity); err != nil {
-		return time.Time{}, false, fmt.Errorf("getting last activity: %w", err)
-	}
-	if lastActivity == nil {
-		return time.Time{}, false, nil
-	}
-	return *lastActivity, true, nil
-}
-
 // Stats returns the all-time average mood score and total entry count for a user.
 func (r *MoodRepository) Stats(ctx context.Context, userID string) (average float64, count int, err error) {
 	const query = `SELECT coalesce(avg(mood_score), 0), count(*) FROM mood_entries WHERE user_id = $1`
