@@ -17,7 +17,7 @@ func Landing(c *fiber.Ctx) error {
 	}
 
 	lang := middleware.CurrentLang(c)
-	today := todayDate()
+	today := todayDate(c)
 	month := startOfMonth(today).AddDate(0, -1, 0)
 
 	return renderPage(c, "pages/landing", fiber.Map{

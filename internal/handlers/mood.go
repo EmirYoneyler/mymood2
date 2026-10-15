@@ -40,16 +40,24 @@ type deleteForm struct {
 	EntryDate string `form:"entry_date"`
 }
 
-func todayDate() time.Time {
-	now := time.Now().UTC()
-	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+// todayDate is the visitor's current calendar day (in their own timezone, see
+// middleware.LoadTimezone), as a midnight-UTC value like every stored date.
+func todayDate(c *fiber.Ctx) time.Time {
+	return localToday(time.Now(), middleware.Location(c))
+}
+
+// localToday returns the calendar date it is at instant now in loc, as
+// midnight UTC. At 01:30 in Istanbul on 15 Oct it's still 14 Oct in UTC, but
+// for that user "today" is the 15th.
+func localToday(now time.Time, loc *time.Location) time.Time {
+	local := now.In(loc)
+	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
 }
 
 // parseEntryDate parses a "2006-01-02" date string, falling back to today
 // if it's missing, malformed, or in the future (you can't rate a day that
 // hasn't happened yet).
-func parseEntryDate(raw string) time.Time {
-	today := todayDate()
+func parseEntryDate(raw string, today time.Time) time.Time {
 	if raw == "" {
 		return today
 	}
@@ -90,8 +98,9 @@ func parseMonth(raw string, fallback, today time.Time) time.Time {
 func (h *MoodHandler) ShowForm(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
 
-	entryDate := parseEntryDate(c.Query("date"))
-	month := parseMonth(c.Query("month"), entryDate, todayDate())
+	today := todayDate(c)
+	entryDate := parseEntryDate(c.Query("date"), today)
+	month := parseMonth(c.Query("month"), entryDate, today)
 
 	entry, err := h.moods.GetByUserAndDate(c.Context(), userID, entryDate)
 	if err != nil && !errors.Is(err, repository.ErrNotFound) {
@@ -117,10 +126,10 @@ func (h *MoodHandler) Submit(c *fiber.Ctx) error {
 
 	var form moodForm
 	if err := c.BodyParser(&form); err != nil {
-		return h.renderError(c, userID, i18n.T(lang, "mood.error_invalid_form"), parseEntryDate(c.FormValue("entry_date")), form)
+		return h.renderError(c, userID, i18n.T(lang, "mood.error_invalid_form"), parseEntryDate(c.FormValue("entry_date"), todayDate(c)), form)
 	}
 
-	entryDate := parseEntryDate(form.EntryDate)
+	entryDate := parseEntryDate(form.EntryDate, todayDate(c))
 
 	if err := h.validate.Struct(form); err != nil {
 		return h.renderError(c, userID, i18n.T(lang, "mood.error_validation"), entryDate, form)
@@ -149,7 +158,7 @@ func (h *MoodHandler) Delete(c *fiber.Ctx) error {
 		return c.Redirect("/mood")
 	}
 
-	entryDate := parseEntryDate(form.EntryDate)
+	entryDate := parseEntryDate(form.EntryDate, todayDate(c))
 
 	if err := h.moods.Delete(c.Context(), userID, entryDate); err != nil {
 		return fiber.ErrInternalServerError
@@ -185,7 +194,7 @@ func (h *MoodHandler) renderError(c *fiber.Ctx, userID, message string, entryDat
 // showing month and the score picker starting at score.
 func (h *MoodHandler) renderForm(c *fiber.Ctx, userID string, entryDate, month time.Time, score float64, data fiber.Map) error {
 	lang := middleware.CurrentLang(c)
-	today := todayDate()
+	today := todayDate(c)
 
 	monthEntries, err := h.moods.ListBetween(c.Context(), userID, month, month.AddDate(0, 1, -1))
 	if err != nil {

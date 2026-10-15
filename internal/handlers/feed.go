@@ -34,7 +34,7 @@ type feedGroup struct {
 func (h *FeedHandler) Show(c *fiber.Ctx) error {
 	userID, _ := middleware.UserIDFromContext(c)
 	lang := middleware.CurrentLang(c)
-	today := todayDate()
+	today := todayDate(c)
 
 	friendIDs, err := h.friendships.ListFriendIDs(c.Context(), userID)
 	if err != nil {

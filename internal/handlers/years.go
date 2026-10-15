@@ -51,7 +51,7 @@ func (h *YearsHandler) ShowFriend(c *fiber.Ctx) error {
 // each rating can be edited or removed, and any past year can be rated.
 func (h *YearsHandler) render(c *fiber.Ctx, viewerID, targetID, username string, editable bool) error {
 	ctx := c.Context()
-	today := todayDate()
+	today := todayDate(c)
 	currentYear := today.Year()
 
 	ratings, err := h.yearRatings.ListByUser(ctx, targetID)

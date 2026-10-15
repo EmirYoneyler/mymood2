@@ -132,6 +132,17 @@
         }
     });
 
+    // --- Timezone ---
+    // Tell the server which timezone we're in, so "today" flips at the
+    // visitor's own midnight rather than the server's (UTC).
+
+    try {
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (tz && document.cookie.indexOf('tz=' + encodeURIComponent(tz)) === -1) {
+            document.cookie = 'tz=' + encodeURIComponent(tz) + '; path=/; max-age=31536000; samesite=lax';
+        }
+    } catch (e) { /* old browser: the server falls back to Europe/Istanbul */ }
+
     // --- Page init (first load + every boosted swap) ---
 
     function init() {

@@ -51,7 +51,7 @@ func (h *ProfileHandler) ShowFriend(c *fiber.Ctx) error {
 func (h *ProfileHandler) renderProfile(c *fiber.Ctx, viewerID, targetID, username string, editable bool) error {
 	ctx := c.Context()
 	lang := middleware.CurrentLang(c)
-	today := todayDate()
+	today := todayDate(c)
 
 	average, count, err := h.moods.Stats(ctx, targetID)
 	if err != nil {

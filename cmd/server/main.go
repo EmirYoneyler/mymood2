@@ -56,6 +56,7 @@ func main() {
 		return c.Next()
 	})
 	app.Use(custommw.LoadLang())
+	app.Use(custommw.LoadTimezone())
 	app.Static("/static", "./web/static")
 
 	app.Get("/healthz", func(c *fiber.Ctx) error {
